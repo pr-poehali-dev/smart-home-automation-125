@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
+import { BuildApkDialog } from "@/components/build-apk-dialog"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -36,7 +37,9 @@ export function Navbar() {
 
           {/* CTA Button */}
           <div className="hidden md:block">
-            <Button className="bg-red-500 hover:bg-red-600 text-white font-geist border-0">Собрать APK</Button>
+            <BuildApkDialog>
+              <Button className="bg-red-500 hover:bg-red-600 text-white font-geist border-0">Собрать APK</Button>
+            </BuildApkDialog>
           </div>
 
           {/* Mobile menu button */}
@@ -76,9 +79,11 @@ export function Navbar() {
                 Вопросы
               </a>
               <div className="px-3 py-2">
-                <Button className="w-full bg-red-500 hover:bg-red-600 text-white font-geist border-0">
-                  Собрать APK
-                </Button>
+                <BuildApkDialog>
+                  <Button className="w-full bg-red-500 hover:bg-red-600 text-white font-geist border-0">
+                    Собрать APK
+                  </Button>
+                </BuildApkDialog>
               </div>
             </div>
           </div>

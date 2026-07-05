@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { BuildApkDialog } from "@/components/build-apk-dialog"
 
 export function CTASection() {
   return (
@@ -11,12 +12,14 @@ export function CTASection() {
             без установки Android Studio и без строчки кода.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 pulse-button text-lg px-8 py-4"
-            >
-              Собрать APK бесплатно
-            </Button>
+            <BuildApkDialog>
+              <Button
+                size="lg"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 pulse-button text-lg px-8 py-4"
+              >
+                Собрать APK бесплатно
+              </Button>
+            </BuildApkDialog>
             <Button
               size="lg"
               variant="outline"
