@@ -12,7 +12,7 @@ export function Navbar() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <h1 className="font-orbitron text-xl font-bold text-white">
-              Synapse<span className="text-red-500">AI</span>
+              Build<span className="text-red-500">APK</span>
             </h1>
           </div>
 
@@ -23,10 +23,10 @@ export function Navbar() {
                 href="#technology"
                 className="font-geist text-white hover:text-red-500 transition-colors duration-200"
               >
-                Технологии
+                Возможности
               </a>
-              <a href="#safety" className="font-geist text-white hover:text-red-500 transition-colors duration-200">
-                Безопасность
+              <a href="#applications" className="font-geist text-white hover:text-red-500 transition-colors duration-200">
+                Как это работает
               </a>
               <a href="#faq" className="font-geist text-white hover:text-red-500 transition-colors duration-200">
                 Вопросы
@@ -36,7 +36,7 @@ export function Navbar() {
 
           {/* CTA Button */}
           <div className="hidden md:block">
-            <Button className="bg-red-500 hover:bg-red-600 text-white font-geist border-0">В лист ожидания</Button>
+            <Button className="bg-red-500 hover:bg-red-600 text-white font-geist border-0">Собрать APK</Button>
           </div>
 
           {/* Mobile menu button */}
@@ -59,14 +59,14 @@ export function Navbar() {
                 className="block px-3 py-2 font-geist text-white hover:text-red-500 transition-colors duration-200"
                 onClick={() => setIsOpen(false)}
               >
-                Технологии
+                Возможности
               </a>
               <a
-                href="#safety"
+                href="#applications"
                 className="block px-3 py-2 font-geist text-white hover:text-red-500 transition-colors duration-200"
                 onClick={() => setIsOpen(false)}
               >
-                Безопасность
+                Как это работает
               </a>
               <a
                 href="#faq"
@@ -77,7 +77,7 @@ export function Navbar() {
               </a>
               <div className="px-3 py-2">
                 <Button className="w-full bg-red-500 hover:bg-red-600 text-white font-geist border-0">
-                  В лист ожидания
+                  Собрать APK
                 </Button>
               </div>
             </div>
