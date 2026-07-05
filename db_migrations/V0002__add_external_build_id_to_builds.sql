@@ -1,0 +1,2 @@
+ALTER TABLE builds ADD COLUMN IF NOT EXISTS external_build_id VARCHAR(100);
+ALTER TABLE builds ADD COLUMN IF NOT EXISTS error_message TEXT;
