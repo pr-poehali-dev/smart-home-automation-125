@@ -1,10 +1,18 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
-import { BuildApkDialog } from "@/components/build-apk-dialog"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const { user } = useAuth()
+  const navigate = useNavigate()
+
+  const goToApp = () => {
+    setIsOpen(false)
+    navigate(user ? "/dashboard" : "/auth")
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[9999] bg-black/95 backdrop-blur-md border-b border-red-500/20">
@@ -37,9 +45,9 @@ export function Navbar() {
 
           {/* CTA Button */}
           <div className="hidden md:block">
-            <BuildApkDialog>
-              <Button className="bg-red-500 hover:bg-red-600 text-white font-geist border-0">Собрать APK</Button>
-            </BuildApkDialog>
+            <Button onClick={goToApp} className="bg-red-500 hover:bg-red-600 text-white font-geist border-0">
+              {user ? "Личный кабинет" : "Собрать APK"}
+            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -79,11 +87,9 @@ export function Navbar() {
                 Вопросы
               </a>
               <div className="px-3 py-2">
-                <BuildApkDialog>
-                  <Button className="w-full bg-red-500 hover:bg-red-600 text-white font-geist border-0">
-                    Собрать APK
-                  </Button>
-                </BuildApkDialog>
+                <Button onClick={goToApp} className="w-full bg-red-500 hover:bg-red-600 text-white font-geist border-0">
+                  {user ? "Личный кабинет" : "Собрать APK"}
+                </Button>
               </div>
             </div>
           </div>

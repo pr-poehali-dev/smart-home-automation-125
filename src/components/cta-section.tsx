@@ -1,7 +1,11 @@
+import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
-import { BuildApkDialog } from "@/components/build-apk-dialog"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function CTASection() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+
   return (
     <section className="py-24 px-6 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10">
       <div className="max-w-4xl mx-auto text-center">
@@ -12,14 +16,13 @@ export function CTASection() {
             без установки Android Studio и без строчки кода.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <BuildApkDialog>
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 pulse-button text-lg px-8 py-4"
-              >
-                Собрать APK бесплатно
-              </Button>
-            </BuildApkDialog>
+            <Button
+              onClick={() => navigate(user ? "/dashboard" : "/auth")}
+              size="lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 pulse-button text-lg px-8 py-4"
+            >
+              Собрать APK бесплатно
+            </Button>
             <Button
               size="lg"
               variant="outline"
