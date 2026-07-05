@@ -42,6 +42,26 @@ export interface BuilderState {
   themeColor: string
   pushEnabled: boolean
   offlineEnabled: boolean
+
+  uiTheme: "light" | "dark" | "system"
+  uiCustomFont: boolean
+  uiFontFamily: string
+  uiLoaderStyle: "spinner" | "bar" | "none"
+
+  adsEnabled: boolean
+  adMobId: string
+  iapEnabled: boolean
+
+  fcmServerKey: string
+
+  appLockEnabled: boolean
+
+  supportWidgetEnabled: boolean
+  supportWidgetUrl: string
+
+  deviceSupport: "phone" | "tablet" | "both"
+
+  iconPreset: string
 }
 
 export const defaultBuilderState: BuilderState = {
@@ -88,6 +108,26 @@ export const defaultBuilderState: BuilderState = {
   themeColor: "#ef4444",
   pushEnabled: false,
   offlineEnabled: false,
+
+  uiTheme: "system",
+  uiCustomFont: false,
+  uiFontFamily: "Inter",
+  uiLoaderStyle: "spinner",
+
+  adsEnabled: false,
+  adMobId: "",
+  iapEnabled: false,
+
+  fcmServerKey: "",
+
+  appLockEnabled: false,
+
+  supportWidgetEnabled: false,
+  supportWidgetUrl: "",
+
+  deviceSupport: "both",
+
+  iconPreset: "default",
 }
 
 export type SectionId =

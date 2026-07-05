@@ -16,10 +16,14 @@ export default function PreviewPanel({ state }: Props) {
       extra: (
         <div className="flex items-center gap-3 mt-2">
           <img src={qrSrc} alt="QR" className="w-16 h-16 rounded" />
-          <button className="text-red-400 text-xs flex items-center gap-1 hover:text-red-300">
+          <a
+            href={qrSrc}
+            download="qr-code.png"
+            className="text-red-400 text-xs flex items-center gap-1 hover:text-red-300"
+          >
             <Icon name="Download" size={12} />
             СКАЧАТЬ
-          </button>
+          </a>
         </div>
       ),
     },

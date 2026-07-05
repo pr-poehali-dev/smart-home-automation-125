@@ -14,7 +14,13 @@ import PermissionsSection from "@/components/builder/sections/PermissionsSection
 import SettingsSection from "@/components/builder/sections/SettingsSection"
 import LinksSection from "@/components/builder/sections/LinksSection"
 import OverridesSection from "@/components/builder/sections/OverridesSection"
-import AddonPlaceholder from "@/components/builder/sections/AddonPlaceholder"
+import UiSection from "@/components/builder/sections/UiSection"
+import MonetizationSection from "@/components/builder/sections/MonetizationSection"
+import NotificationsSection from "@/components/builder/sections/NotificationsSection"
+import SecuritySection from "@/components/builder/sections/SecuritySection"
+import SupportSection from "@/components/builder/sections/SupportSection"
+import DevicesSection from "@/components/builder/sections/DevicesSection"
+import IconsSection from "@/components/builder/sections/IconsSection"
 import {
   BuilderState,
   defaultBuilderState,
@@ -37,8 +43,31 @@ export default function AppBuilder() {
     if (!authLoading && !user) navigate("/auth")
   }, [authLoading, user, navigate])
 
+  useEffect(() => {
+    const draft = localStorage.getItem("buildapk_draft")
+    if (draft) {
+      try {
+        setState({ ...defaultBuilderState, ...JSON.parse(draft) })
+      } catch {
+        // ignore corrupted draft
+      }
+    }
+  }, [])
+
   const update = <K extends keyof BuilderState>(key: K, value: BuilderState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleSaveDraft = () => {
+    localStorage.setItem("buildapk_draft", JSON.stringify(state))
+    toast({ title: "Черновик сохранён", description: "Вы сможете продолжить редактирование позже." })
+  }
+
+  const handleReset = () => {
+    localStorage.removeItem("buildapk_draft")
+    setState(defaultBuilderState)
+    setActive("info")
+    toast({ title: "Форма очищена" })
   }
 
   const sectionLabel =
@@ -103,9 +132,13 @@ export default function AppBuilder() {
     if (active === "settings") return <SettingsSection state={state} update={update} />
     if (active === "links") return <LinksSection state={state} update={update} />
     if (active === "overrides") return <OverridesSection state={state} update={update} />
-
-    const addon = addonSections.find((a) => `addon-${a.id}` === active)
-    if (addon) return <AddonPlaceholder label={addon.label} icon={addon.icon} />
+    if (active === "addon-ui") return <UiSection state={state} update={update} />
+    if (active === "addon-monetization") return <MonetizationSection state={state} update={update} />
+    if (active === "addon-notifications") return <NotificationsSection state={state} update={update} />
+    if (active === "addon-security") return <SecuritySection state={state} update={update} />
+    if (active === "addon-support") return <SupportSection state={state} update={update} />
+    if (active === "addon-devices") return <DevicesSection state={state} update={update} />
+    if (active === "addon-icons") return <IconsSection state={state} update={update} />
 
     return <InfoSection state={state} update={update} />
   }
@@ -132,11 +165,16 @@ export default function AppBuilder() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={handleReset}
                 className="border-red-500/30 text-white hover:bg-red-500/10 bg-transparent"
               >
-                Сохранение и восстановление
+                Сбросить форму
               </Button>
-              <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white border-0">
+              <Button
+                size="sm"
+                onClick={handleSaveDraft}
+                className="bg-red-500 hover:bg-red-600 text-white border-0"
+              >
                 Сохранить как черновик
               </Button>
             </div>
