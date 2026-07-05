@@ -1,7 +1,8 @@
 import func2url from "../../backend/func2url.json"
 
 export const AUTH_URL = func2url.auth
-export const BUILDS_URL = func2url.builds
+export const BUILDS_URL = (func2url as Record<string, string>).builds
+export const UPLOAD_URL = func2url.upload
 
 export function getToken(): string | null {
   return localStorage.getItem("buildapk_token")

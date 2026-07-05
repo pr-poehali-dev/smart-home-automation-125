@@ -10,6 +10,8 @@ export interface BuilderState {
   splashColor: string
   splashGradient: boolean
   splashBehavior: string
+  splashAssetUrl: string
+  splashAssetName: string
 
   permCamera: boolean
   permLocation: boolean
@@ -76,6 +78,8 @@ export const defaultBuilderState: BuilderState = {
   splashColor: "#1A1025",
   splashGradient: false,
   splashBehavior: "once",
+  splashAssetUrl: "",
+  splashAssetName: "",
 
   permCamera: false,
   permLocation: false,

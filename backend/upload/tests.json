@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST без авторизации",
+      "method": "POST",
+      "path": "/",
+      "body": {"file_base64": "aGVsbG8=", "filename": "icon.png", "folder": "icons"},
+      "expectedStatus": 401,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET метод не поддерживается",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 405,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

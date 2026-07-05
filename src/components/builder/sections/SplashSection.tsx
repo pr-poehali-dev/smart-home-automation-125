@@ -1,3 +1,4 @@
+import { useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -11,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { useFileUpload, UploadFolder } from "@/hooks/use-file-upload"
 import { BuilderState } from "../types"
 
 interface Props {
@@ -25,14 +28,47 @@ const splashTypes = [
   { id: "mp4", label: "MP4", icon: "Video", premium: true },
 ] as const
 
+const splashUploadConfig: Record<string, { folder: UploadFolder; accept: string[]; maxSizeMb: number }> = {
+  animation: { folder: "splash-json", accept: [".json"], maxSizeMb: 5 },
+  logo: { folder: "splash-images", accept: [".png", ".jpg", ".jpeg"], maxSizeMb: 5 },
+  full: { folder: "splash-images", accept: [".png", ".jpg", ".jpeg"], maxSizeMb: 5 },
+  mp4: { folder: "splash-video", accept: [".mp4"], maxSizeMb: 15 },
+}
+
 export default function SplashSection({ state, update }: Props) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { upload, isUploading } = useFileUpload()
+  const { toast } = useToast()
+
+  const config = splashUploadConfig[state.splashType]
+
+  const handlePick = () => fileInputRef.current?.click()
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+    const url = await upload(file, config)
+    if (url) {
+      update("splashAssetUrl", url)
+      update("splashAssetName", file.name)
+      toast({ title: "Файл загружен" })
+    } else {
+      toast({ title: "Не удалось загрузить файл", variant: "destructive" })
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {splashTypes.map((t) => (
           <button
             key={t.id}
-            onClick={() => update("splashType", t.id)}
+            onClick={() => {
+              update("splashType", t.id)
+              update("splashAssetUrl", "")
+              update("splashAssetName", "")
+            }}
             className={`flex flex-col items-start gap-2 rounded-lg border p-3 text-left transition-colors ${
               state.splashType === t.id
                 ? "border-red-500 bg-red-500/5"
@@ -61,15 +97,41 @@ export default function SplashSection({ state, update }: Props) {
 
       <Card className="bg-neutral-950 border-red-500/20">
         <CardContent className="pt-6 space-y-5">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={config.accept.join(",")}
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
           {state.splashType === "animation" && (
             <div className="space-y-2">
               <Label className="text-white">Загрузите JSON-файл</Label>
-              <div className="border border-dashed border-red-500/20 rounded-lg h-28 flex flex-col items-center justify-center bg-neutral-900 gap-1">
-                <Icon name="FileJson" size={22} className="text-gray-500" />
-                <span className="text-xs text-gray-500">animation.json</span>
-              </div>
+              <button
+                type="button"
+                onClick={handlePick}
+                className="w-full border border-dashed border-red-500/20 rounded-lg h-28 flex flex-col items-center justify-center bg-neutral-900 gap-1 hover:border-red-500/40 transition-colors"
+              >
+                {isUploading ? (
+                  <Icon name="Loader2" size={22} className="text-gray-500 animate-spin" />
+                ) : (
+                  <>
+                    <Icon name="FileJson" size={22} className="text-gray-500" />
+                    <span className="text-xs text-gray-500">{state.splashAssetName || "animation.json"}</span>
+                  </>
+                )}
+              </button>
               <p className="text-xs text-gray-500">
-                Добавьте свои собственные анимации. <span className="text-red-400 cursor-pointer">Изучите анимации.</span>
+                Добавьте свои собственные анимации.{" "}
+                <a
+                  href="https://lottiefiles.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-red-400 hover:text-red-300"
+                >
+                  Изучите анимации.
+                </a>
               </p>
             </div>
           )}
@@ -77,18 +139,39 @@ export default function SplashSection({ state, update }: Props) {
           {(state.splashType === "logo" || state.splashType === "full") && (
             <div className="space-y-2">
               <Label className="text-white">Загрузите изображение</Label>
-              <div className="border border-dashed border-red-500/20 rounded-lg h-28 flex items-center justify-center bg-neutral-900">
-                <Icon name="ImagePlus" size={22} className="text-gray-500" />
-              </div>
+              <button
+                type="button"
+                onClick={handlePick}
+                className="w-full border border-dashed border-red-500/20 rounded-lg h-28 flex items-center justify-center bg-neutral-900 hover:border-red-500/40 transition-colors overflow-hidden"
+              >
+                {isUploading ? (
+                  <Icon name="Loader2" size={22} className="text-gray-500 animate-spin" />
+                ) : state.splashAssetUrl ? (
+                  <img src={state.splashAssetUrl} alt="splash" className="h-full object-contain" />
+                ) : (
+                  <Icon name="ImagePlus" size={22} className="text-gray-500" />
+                )}
+              </button>
             </div>
           )}
 
           {state.splashType === "mp4" && (
             <div className="space-y-2">
               <Label className="text-white">Загрузите видео (MP4)</Label>
-              <div className="border border-dashed border-red-500/20 rounded-lg h-28 flex items-center justify-center bg-neutral-900">
-                <Icon name="Video" size={22} className="text-gray-500" />
-              </div>
+              <button
+                type="button"
+                onClick={handlePick}
+                className="w-full border border-dashed border-red-500/20 rounded-lg h-28 flex flex-col items-center justify-center bg-neutral-900 gap-1 hover:border-red-500/40 transition-colors"
+              >
+                {isUploading ? (
+                  <Icon name="Loader2" size={22} className="text-gray-500 animate-spin" />
+                ) : (
+                  <>
+                    <Icon name="Video" size={22} className="text-gray-500" />
+                    <span className="text-xs text-gray-500">{state.splashAssetName || "video.mp4"}</span>
+                  </>
+                )}
+              </button>
             </div>
           )}
 

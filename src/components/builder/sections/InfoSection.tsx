@@ -1,8 +1,11 @@
+import { useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Icon from "@/components/ui/icon"
+import { useToast } from "@/hooks/use-toast"
+import { useFileUpload } from "@/hooks/use-file-upload"
 import { BuilderState } from "../types"
 
 interface Props {
@@ -11,6 +14,25 @@ interface Props {
 }
 
 export default function InfoSection({ state, update }: Props) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { upload, isUploading } = useFileUpload()
+  const { toast } = useToast()
+
+  const handleIconPick = () => fileInputRef.current?.click()
+
+  const handleIconChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+    const url = await upload(file, { folder: "icons", accept: [".png", ".jpg", ".jpeg"], maxSizeMb: 5 })
+    if (url) {
+      update("iconUrl", url)
+      toast({ title: "Значок загружен" })
+    } else {
+      toast({ title: "Не удалось загрузить значок", variant: "destructive" })
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-2xl">
       <Card className="bg-neutral-950 border-red-500/20">
@@ -42,21 +64,40 @@ export default function InfoSection({ state, update }: Props) {
 
           <div className="space-y-2">
             <Label className="text-white">Загрузить значок приложения</Label>
-            <div className="border border-dashed border-red-500/20 rounded-lg h-28 flex items-center justify-center bg-neutral-900 relative overflow-hidden">
-              {state.iconUrl ? (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".png,.jpg,.jpeg"
+              className="hidden"
+              onChange={handleIconChange}
+            />
+            <button
+              type="button"
+              onClick={handleIconPick}
+              className="w-full border border-dashed border-red-500/20 rounded-lg h-28 flex items-center justify-center bg-neutral-900 relative overflow-hidden hover:border-red-500/40 transition-colors"
+            >
+              {isUploading ? (
+                <Icon name="Loader2" size={24} className="text-gray-500 animate-spin" />
+              ) : state.iconUrl ? (
                 <img src={state.iconUrl} alt="icon" className="h-16 w-16 rounded-xl object-cover" />
               ) : (
                 <Icon name="ImagePlus" size={24} className="text-gray-500" />
               )}
-            </div>
+            </button>
             <Button
               type="button"
               variant="outline"
               size="sm"
+              onClick={handleIconPick}
+              disabled={isUploading}
               className="border-red-500/30 text-white hover:bg-red-500/10 bg-transparent w-full"
             >
-              <Icon name="Sparkles" size={14} />
-              Создать значок приложения
+              {isUploading ? (
+                <Icon name="Loader2" size={14} className="animate-spin" />
+              ) : (
+                <Icon name="Sparkles" size={14} />
+              )}
+              {state.iconUrl ? "Заменить значок" : "Загрузить значок"}
             </Button>
           </div>
 

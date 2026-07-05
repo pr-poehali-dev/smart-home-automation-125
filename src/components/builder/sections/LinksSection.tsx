@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import { BuilderState } from "../types"
 
@@ -9,7 +9,9 @@ interface Props {
   update: <K extends keyof BuilderState>(key: K, value: BuilderState[K]) => void
 }
 
-const cards = [
+const docsUrl = "https://docs.poehali.dev/getting-started/prompting"
+
+const toggleCards = [
   {
     icon: "Globe",
     title: "Внутренние против внешних",
@@ -29,12 +31,6 @@ const cards = [
     key: "setReferrer" as const,
   },
   {
-    icon: "Waypoints",
-    title: "Протокол схемы URL",
-    desc: "«Схема URL» — это расширенный параметр конфигурации, используемый для определения нестандартного формата ссылки, которая будет открываться только в вашем приложении, а не в браузере устройства.",
-    key: "urlScheme" as const,
-  },
-  {
     icon: "ShieldCheck",
     title: "Пароль / Веб-аутентификация",
     desc: "Включите встроенную аутентификацию по паролю или WebAuthn, чтобы пользователи вашего приложения могли входить в систему с помощью биометрических данных, ключей безопасности или сохранённых учётных данных.",
@@ -42,31 +38,37 @@ const cards = [
   },
 ]
 
+function DocsLink() {
+  return (
+    <a
+      href={docsUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-xs text-red-400 flex items-center gap-1 hover:text-red-300"
+    >
+      Просмотреть документы
+      <Icon name="ExternalLink" size={11} />
+    </a>
+  )
+}
+
 export default function LinksSection({ state, update }: Props) {
   return (
     <div className="space-y-4 max-w-5xl">
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cards.map((c) => (
+        {toggleCards.map((c) => (
           <Card key={c.title} className="bg-neutral-950 border-red-500/20 flex flex-col">
             <CardContent className="pt-5 flex flex-col flex-1">
               <div className="flex items-center justify-between mb-3">
                 <Icon name={c.icon} size={20} className="text-gray-400" />
-                <span className="text-xs text-red-400 flex items-center gap-1 cursor-pointer">
-                  Просмотреть документы
-                  <Icon name="ExternalLink" size={11} />
-                </span>
+                <DocsLink />
               </div>
               <p className="text-white text-sm font-medium mb-1.5">{c.title}</p>
               <p className="text-gray-500 text-xs flex-1">{c.desc}</p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => update(c.key, (typeof state[c.key] === "boolean" ? !state[c.key] : true) as never)}
-                className="border-red-500/30 text-white hover:bg-red-500/10 bg-transparent mt-4 w-full"
-              >
-                Настройка
-              </Button>
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-gray-400 text-xs">Включено</span>
+                <Switch checked={state[c.key]} onCheckedChange={(v) => update(c.key, v)} />
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -74,11 +76,27 @@ export default function LinksSection({ state, update }: Props) {
         <Card className="bg-neutral-950 border-red-500/20 flex flex-col">
           <CardContent className="pt-5 flex flex-col flex-1">
             <div className="flex items-center justify-between mb-3">
+              <Icon name="Waypoints" size={20} className="text-gray-400" />
+              <DocsLink />
+            </div>
+            <p className="text-white text-sm font-medium mb-1.5">Протокол схемы URL</p>
+            <p className="text-gray-500 text-xs flex-1">
+              «Схема URL» — это расширенный параметр конфигурации, используемый для определения нестандартного формата ссылки, которая будет открываться только в вашем приложении, а не в браузере устройства.
+            </p>
+            <Input
+              value={state.urlScheme}
+              onChange={(e) => update("urlScheme", e.target.value)}
+              placeholder="myapp://"
+              className="bg-neutral-900 border-red-500/20 text-white placeholder:text-gray-500 mt-4"
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-neutral-950 border-red-500/20 flex flex-col">
+          <CardContent className="pt-5 flex flex-col flex-1">
+            <div className="flex items-center justify-between mb-3">
               <Icon name="Globe2" size={20} className="text-gray-400" />
-              <span className="text-xs text-red-400 flex items-center gap-1 cursor-pointer">
-                Просмотреть документы
-                <Icon name="ExternalLink" size={11} />
-              </span>
+              <DocsLink />
             </div>
             <p className="text-white text-sm font-medium mb-1.5">Разрешить HTTP (небезопасный контент)</p>
             <p className="text-gray-500 text-xs flex-1">
