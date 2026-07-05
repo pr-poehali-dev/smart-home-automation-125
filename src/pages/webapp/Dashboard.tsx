@@ -41,6 +41,7 @@ export default function Dashboard() {
   const [builds, setBuilds] = useState<Build[]>([])
   const [isLoadingBuilds, setIsLoadingBuilds] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const [siteUrl, setSiteUrl] = useState("")
   const [appName, setAppName] = useState("")
@@ -108,6 +109,26 @@ export default function Dashboard() {
       toast({ title: "Ошибка", description: err instanceof Error ? err.message : "Попробуйте снова", variant: "destructive" })
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleDeleteBuild = async (id: number) => {
+    setDeletingId(id)
+    try {
+      const res = await fetch(`${BUILDS_URL}?id=${id}`, {
+        method: "DELETE",
+        headers: { ...authHeaders() },
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || "Не удалось удалить сборку")
+      }
+      setBuilds((prev) => prev.filter((b) => b.id !== id))
+      toast({ title: "Сборка удалена" })
+    } catch (err) {
+      toast({ title: "Ошибка", description: err instanceof Error ? err.message : "Попробуйте снова", variant: "destructive" })
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -313,6 +334,19 @@ export default function Dashboard() {
                           </a>
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={deletingId === build.id}
+                        onClick={() => handleDeleteBuild(build.id)}
+                        className="border-red-500/30 text-gray-400 hover:text-red-400 hover:bg-red-500/10 bg-transparent"
+                      >
+                        {deletingId === build.id ? (
+                          <Icon name="Loader2" size={16} className="animate-spin" />
+                        ) : (
+                          <Icon name="Trash2" size={16} />
+                        )}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
