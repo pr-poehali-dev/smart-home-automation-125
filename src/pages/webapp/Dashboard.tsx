@@ -145,10 +145,22 @@ export default function Dashboard() {
         <div className="lg:col-span-2">
           <Card className="bg-neutral-950 border-red-500/20 sticky top-24">
             <CardHeader>
-              <CardTitle className="text-white font-orbitron flex items-center gap-2">
-                <Icon name="Hammer" size={20} className="text-red-500" />
-                Новая сборка
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white font-orbitron flex items-center gap-2">
+                  <Icon name="Hammer" size={20} className="text-red-500" />
+                  Новая сборка
+                </CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/builder")}
+                  className="border-red-500/30 text-white hover:bg-red-500/10 bg-transparent"
+                >
+                  <Icon name="SlidersHorizontal" size={14} />
+                  Конструктор
+                </Button>
+              </div>
               <CardDescription className="text-gray-400">
                 Настройте приложение и запустите сборку APK
               </CardDescription>
