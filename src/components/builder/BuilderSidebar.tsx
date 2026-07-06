@@ -60,23 +60,30 @@ export default function BuilderSidebar({ active, onSelect }: Props) {
         ))}
 
         <div className="pt-4">
-          <button
-            onClick={() => setAddonsOpen((v) => !v)}
-            className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-300"
-          >
-            <span className="flex items-center gap-2">
+          <div className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-300">
+            <button
+              onClick={() => setAddonsOpen((v) => !v)}
+              className="flex items-center gap-2 flex-1 text-left"
+            >
               Дополнения
-              <span className="flex items-center gap-1 text-red-400 border border-red-500/30 rounded px-1.5 py-0.5 text-[10px] normal-case font-normal">
-                <Icon name="Plus" size={10} />
-                добавлять
-              </span>
-            </span>
-            <Icon
-              name="ChevronDown"
-              size={14}
-              className={`transition-transform ${addonsOpen ? "" : "-rotate-90"}`}
-            />
-          </button>
+              <Icon
+                name="ChevronDown"
+                size={14}
+                className={`transition-transform ${addonsOpen ? "" : "-rotate-90"}`}
+              />
+            </button>
+            <button
+              onClick={() => onSelect("addon-marketplace")}
+              className={`flex items-center gap-1 border rounded px-1.5 py-0.5 text-[10px] normal-case font-normal transition-colors ${
+                active === "addon-marketplace"
+                  ? "text-red-300 border-red-400 bg-red-500/10"
+                  : "text-red-400 border-red-500/30 hover:bg-red-500/10"
+              }`}
+            >
+              <Icon name="Plus" size={10} />
+              добавлять
+            </button>
+          </div>
 
           {addonsOpen && (
             <div className="mt-1 space-y-1">

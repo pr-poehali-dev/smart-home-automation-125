@@ -21,6 +21,7 @@ import SecuritySection from "@/components/builder/sections/SecuritySection"
 import SupportSection from "@/components/builder/sections/SupportSection"
 import DevicesSection from "@/components/builder/sections/DevicesSection"
 import IconsSection from "@/components/builder/sections/IconsSection"
+import AddonsMarketplaceSection from "@/components/builder/sections/AddonsMarketplaceSection"
 import {
   BuilderState,
   defaultBuilderState,
@@ -71,9 +72,11 @@ export default function AppBuilder() {
   }
 
   const sectionLabel =
-    mainSections.find((s) => s.id === active)?.label ||
-    addonSections.find((s) => `addon-${s.id}` === active)?.label ||
-    "Информация о приложении"
+    active === "addon-marketplace"
+      ? "Информация о приложении"
+      : mainSections.find((s) => s.id === active)?.label ||
+        addonSections.find((s) => `addon-${s.id}` === active)?.label ||
+        "Информация о приложении"
 
   const handleBuild = async () => {
     if (!state.siteUrl || !state.appName) {
@@ -146,6 +149,7 @@ export default function AppBuilder() {
     if (active === "addon-support") return <SupportSection state={state} update={update} />
     if (active === "addon-devices") return <DevicesSection state={state} update={update} />
     if (active === "addon-icons") return <IconsSection state={state} update={update} />
+    if (active === "addon-marketplace") return <AddonsMarketplaceSection state={state} update={update} />
 
     return <InfoSection state={state} update={update} />
   }
@@ -156,7 +160,12 @@ export default function AppBuilder() {
         <BuilderSidebar active={active} onSelect={setActive} />
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          <BuilderTopbar sectionLabel={sectionLabel} onBuild={handleBuild} isBuilding={isSaving} />
+          <BuilderTopbar
+            sectionLabel={sectionLabel}
+            onBuild={handleBuild}
+            isBuilding={isSaving}
+            showBuyButton={active === "addon-marketplace"}
+          />
 
           <main className="flex-1 overflow-y-auto p-6">{renderSection()}</main>
 

@@ -5,9 +5,10 @@ interface Props {
   sectionLabel: string
   onBuild: () => void
   isBuilding: boolean
+  showBuyButton?: boolean
 }
 
-export default function BuilderTopbar({ sectionLabel, onBuild, isBuilding }: Props) {
+export default function BuilderTopbar({ sectionLabel, onBuild, isBuilding, showBuyButton }: Props) {
   return (
     <header className="h-16 border-b border-red-500/20 bg-black/95 backdrop-blur-md flex items-center justify-between px-6 shrink-0">
       <div>
@@ -17,18 +18,24 @@ export default function BuilderTopbar({ sectionLabel, onBuild, isBuilding }: Pro
         </p>
         <h2 className="text-white font-semibold text-base">{sectionLabel}</h2>
       </div>
-      <Button
-        onClick={onBuild}
-        disabled={isBuilding}
-        className="bg-red-500 hover:bg-red-600 text-white border-0"
-      >
-        {isBuilding ? (
-          <Icon name="Loader2" size={16} className="animate-spin" />
-        ) : (
-          <Icon name="Rocket" size={16} />
-        )}
-        Собрать APK
-      </Button>
+      {showBuyButton ? (
+        <Button className="bg-red-500 hover:bg-red-600 text-white border-0">
+          Купить сейчас
+        </Button>
+      ) : (
+        <Button
+          onClick={onBuild}
+          disabled={isBuilding}
+          className="bg-red-500 hover:bg-red-600 text-white border-0"
+        >
+          {isBuilding ? (
+            <Icon name="Loader2" size={16} className="animate-spin" />
+          ) : (
+            <Icon name="Rocket" size={16} />
+          )}
+          Собрать APK
+        </Button>
+      )}
     </header>
   )
 }

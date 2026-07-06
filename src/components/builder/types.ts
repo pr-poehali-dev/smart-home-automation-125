@@ -69,6 +69,8 @@ export interface BuilderState {
   deviceSupport: "phone" | "tablet" | "both"
 
   iconPreset: string
+
+  addedAddonIds: string[]
 }
 
 export const defaultBuilderState: BuilderState = {
@@ -142,6 +144,8 @@ export const defaultBuilderState: BuilderState = {
   deviceSupport: "both",
 
   iconPreset: "default",
+
+  addedAddonIds: [],
 }
 
 export type SectionId =
