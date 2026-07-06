@@ -6,6 +6,15 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { BUILDS_URL, authHeaders } from "@/lib/api"
@@ -167,18 +176,70 @@ export default function Dashboard() {
           <h1 className="font-orbitron text-xl font-bold text-white">
             Build<span className="text-red-500">APK</span>
           </h1>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-400 text-sm hidden sm:block">{user.email}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { logout(); navigate("/") }}
-              className="border-red-500/30 text-white hover:bg-red-500/10 bg-transparent"
-            >
-              <Icon name="LogOut" size={16} />
-              Выйти
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 outline-none">
+                <Avatar className="h-9 w-9 border border-red-500/30">
+                  <AvatarFallback className="bg-red-500/10 text-red-400 font-semibold">
+                    {(user.name || user.email)[0].toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <Icon name="ChevronDown" size={16} className="text-gray-400 hidden sm:block" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 bg-neutral-950 border-red-500/20">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col">
+                  <span className="text-white font-medium truncate">{user.name || "Пользователь"}</span>
+                  <span className="text-gray-500 text-xs truncate">{user.email}</span>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-red-500/10" />
+              <DropdownMenuItem
+                onClick={() => navigate("/dashboard")}
+                className="text-gray-300 focus:bg-red-500/10 focus:text-white cursor-pointer"
+              >
+                <Icon name="LayoutGrid" size={16} className="mr-2" />
+                Мои приложения
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => toast({ title: "Скоро будет доступно" })}
+                className="text-gray-300 focus:bg-red-500/10 focus:text-white cursor-pointer"
+              >
+                <Icon name="User" size={16} className="mr-2" />
+                Мой профиль
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => toast({ title: "Скоро будет доступно" })}
+                className="text-gray-300 focus:bg-red-500/10 focus:text-white cursor-pointer"
+              >
+                <Icon name="Bell" size={16} className="mr-2" />
+                Уведомления
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => toast({ title: "Скоро будет доступно" })}
+                className="text-gray-300 focus:bg-red-500/10 focus:text-white cursor-pointer"
+              >
+                <Icon name="FileText" size={16} className="mr-2" />
+                Платежные данные
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => toast({ title: "Скоро будет доступно" })}
+                className="text-gray-300 focus:bg-red-500/10 focus:text-white cursor-pointer"
+              >
+                <Icon name="Gift" size={16} className="mr-2" />
+                Приглашайте друзей и зарабатывайте!
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-red-500/10" />
+              <DropdownMenuItem
+                onClick={() => { logout(); navigate("/") }}
+                className="text-gray-300 focus:bg-red-500/10 focus:text-white cursor-pointer"
+              >
+                <Icon name="LogOut" size={16} className="mr-2" />
+                Выйти
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </nav>
 
@@ -366,11 +427,21 @@ export default function Dashboard() {
                         {statusMap[build.status].label}
                       </Badge>
                       {build.status === "ready" && build.apk_url && (
-                        <Button asChild size="sm" className="bg-red-500 hover:bg-red-600 text-white border-0">
-                          <a href={build.apk_url} target="_blank" rel="noreferrer">
-                            <Icon name="Download" size={16} />
-                          </a>
-                        </Button>
+                        <>
+                          <Button asChild size="sm" className="bg-red-500 hover:bg-red-600 text-white border-0">
+                            <a href={build.apk_url} target="_blank" rel="noreferrer">
+                              <Icon name="Download" size={16} />
+                            </a>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/builder/${build.id}`)}
+                            className="border-red-500/30 text-gray-400 hover:text-white hover:bg-red-500/10 bg-transparent"
+                          >
+                            <Icon name="Pencil" size={16} />
+                          </Button>
+                        </>
                       )}
                       <Button
                         size="sm"

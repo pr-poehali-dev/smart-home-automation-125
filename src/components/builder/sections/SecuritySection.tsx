@@ -26,6 +26,16 @@ export default function SecuritySection({ state, update }: Props) {
           >
             <Switch checked={state.webAuth} onCheckedChange={(v) => update("webAuth", v)} />
           </SettingRow>
+
+          <SettingRow
+            title="Отключить скриншот"
+            description="Запрещает делать скриншоты и записывать экран внутри приложения — контент скрывается в переключателе задач и на записи экрана."
+          >
+            <Switch
+              checked={state.screenshotDisabled}
+              onCheckedChange={(v) => update("screenshotDisabled", v)}
+            />
+          </SettingRow>
         </CardContent>
       </Card>
     </div>

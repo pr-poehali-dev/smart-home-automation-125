@@ -62,6 +62,7 @@ export interface BuilderState {
   fcmServerKey: string
 
   appLockEnabled: boolean
+  screenshotDisabled: boolean
 
   supportWidgetEnabled: boolean
   supportWidgetUrl: string
@@ -137,6 +138,7 @@ export const defaultBuilderState: BuilderState = {
   fcmServerKey: "",
 
   appLockEnabled: false,
+  screenshotDisabled: false,
 
   supportWidgetEnabled: false,
   supportWidgetUrl: "",

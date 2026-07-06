@@ -39,12 +39,14 @@ export default function AppBuilder() {
   const [active, setActive] = useState<SectionId>("info")
   const [state, setState] = useState<BuilderState>(defaultBuilderState)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoadingBuild, setIsLoadingBuild] = useState(!!buildId)
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth")
   }, [authLoading, user, navigate])
 
   useEffect(() => {
+    if (buildId) return
     const draft = localStorage.getItem("buildapk_draft")
     if (draft) {
       try {
@@ -53,7 +55,27 @@ export default function AppBuilder() {
         // ignore corrupted draft
       }
     }
-  }, [])
+  }, [buildId])
+
+  useEffect(() => {
+    if (!buildId || !user) return
+    setIsLoadingBuild(true)
+    fetch(`${BUILDS_URL}?id=${buildId}`, { headers: { ...authHeaders() } })
+      .then(async (res) => {
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || "Не удалось загрузить сборку")
+        setState({ ...defaultBuilderState, ...(data.config || {}) })
+      })
+      .catch((err) => {
+        toast({
+          title: "Ошибка загрузки сборки",
+          description: err instanceof Error ? err.message : "Попробуйте снова",
+          variant: "destructive",
+        })
+        navigate("/dashboard")
+      })
+      .finally(() => setIsLoadingBuild(false))
+  }, [buildId, user])
 
   const update = <K extends keyof BuilderState>(key: K, value: BuilderState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }))
@@ -91,8 +113,8 @@ export default function AppBuilder() {
 
     setIsSaving(true)
     try {
-      const res = await fetch(BUILDS_URL, {
-        method: "POST",
+      const res = await fetch(buildId ? `${BUILDS_URL}?id=${buildId}` : BUILDS_URL, {
+        method: buildId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({
           site_url: state.siteUrl,
@@ -115,10 +137,13 @@ export default function AppBuilder() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Не удалось создать сборку")
+      if (!res.ok) throw new Error(data.error || "Не удалось сохранить сборку")
 
       localStorage.removeItem("buildapk_draft")
-      toast({ title: "Заявка создана!", description: `Сборка «${state.appName}» добавлена в очередь.` })
+      toast({
+        title: buildId ? "Сборка обновлена!" : "Заявка создана!",
+        description: `Сборка «${state.appName}» добавлена в очередь.`,
+      })
       navigate("/dashboard")
     } catch (err) {
       toast({
@@ -131,7 +156,7 @@ export default function AppBuilder() {
     }
   }
 
-  if (authLoading || !user) {
+  if (authLoading || !user || isLoadingBuild) {
     return (
       <div className="dark min-h-screen bg-black flex items-center justify-center">
         <Icon name="Loader2" size={32} className="animate-spin text-red-500" />
