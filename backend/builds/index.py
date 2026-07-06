@@ -171,6 +171,38 @@ def handler(event: dict, context) -> dict:
         if user_id is None:
             return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Не авторизован'})}
 
+        if method == 'GET' and action == 'download':
+            build_id = params.get('id')
+            if not build_id:
+                return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Не указан id сборки'})}
+
+            cur.execute(
+                f"SELECT apk_url, app_name FROM builds WHERE id = {int(build_id)} AND user_id = {user_id} AND status = 'ready'"
+            )
+            row = cur.fetchone()
+            if not row or not row[0]:
+                return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'APK-файл не найден'})}
+
+            apk_url, app_name = row
+            try:
+                req = urllib.request.Request(apk_url)
+                with urllib.request.urlopen(req, timeout=25) as resp:
+                    file_bytes = resp.read()
+            except Exception as e:
+                return {'statusCode': 502, 'headers': headers, 'body': json.dumps({'error': f'Не удалось получить APK с сервера сборки: {e}'})}
+
+            safe_name = ''.join(c for c in (app_name or 'app') if c.isalnum() or c in (' ', '-', '_')).strip() or 'app'
+            return {
+                'statusCode': 200,
+                'headers': {
+                    **cors_headers(),
+                    'Content-Type': 'application/vnd.android.package-archive',
+                    'Content-Disposition': f'attachment; filename="{safe_name}.apk"',
+                },
+                'body': base64.b64encode(file_bytes).decode(),
+                'isBase64Encoded': True,
+            }
+
         if method == 'GET':
             build_id = params.get('id')
             if build_id:

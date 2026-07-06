@@ -53,6 +53,7 @@ export default function Dashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [downloadingId, setDownloadingId] = useState<number | null>(null)
 
   const [siteUrl, setSiteUrl] = useState("")
   const [appName, setAppName] = useState("")
@@ -138,6 +139,32 @@ export default function Dashboard() {
       toast({ title: "Ошибка", description: err instanceof Error ? err.message : "Попробуйте снова", variant: "destructive" })
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleDownloadBuild = async (id: number, appName: string) => {
+    setDownloadingId(id)
+    try {
+      const res = await fetch(`${BUILDS_URL}?action=download&id=${id}`, {
+        headers: { ...authHeaders() },
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || "Не удалось скачать APK")
+      }
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `${appName || "app"}.apk`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      toast({ title: "Ошибка", description: err instanceof Error ? err.message : "Попробуйте снова", variant: "destructive" })
+    } finally {
+      setDownloadingId(null)
     }
   }
 
@@ -428,10 +455,17 @@ export default function Dashboard() {
                       </Badge>
                       {build.status === "ready" && build.apk_url && (
                         <>
-                          <Button asChild size="sm" className="bg-red-500 hover:bg-red-600 text-white border-0">
-                            <a href={build.apk_url} target="_blank" rel="noreferrer">
+                          <Button
+                            size="sm"
+                            disabled={downloadingId === build.id}
+                            onClick={() => handleDownloadBuild(build.id, build.app_name)}
+                            className="bg-red-500 hover:bg-red-600 text-white border-0"
+                          >
+                            {downloadingId === build.id ? (
+                              <Icon name="Loader2" size={16} className="animate-spin" />
+                            ) : (
                               <Icon name="Download" size={16} />
-                            </a>
+                            )}
                           </Button>
                           <Button
                             size="sm"

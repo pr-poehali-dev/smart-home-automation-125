@@ -32,6 +32,12 @@
       "path": "/?action=callback",
       "body": {"build_id": 123, "status": "ready"},
       "expectedStatus": 403
+    },
+    {
+      "name": "Download без токена",
+      "method": "GET",
+      "path": "/?action=download&id=1",
+      "expectedStatus": 401
     }
   ]
 }
