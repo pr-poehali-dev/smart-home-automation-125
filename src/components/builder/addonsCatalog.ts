@@ -6,6 +6,8 @@ export type AddonCategory =
   | "security"
   | "support"
   | "devices"
+  | "lifecycle"
+  | "publishing"
 
 export type AddonBadge = "premium" | "premium-start" | "included"
 
@@ -33,6 +35,8 @@ export const categoryLabels: Record<AddonCategory, string> = {
   security: "Безопасность и аутентификация",
   support: "Коммуникация и поддержка",
   devices: "Устройства и оборудование",
+  lifecycle: "Жизненный цикл приложения",
+  publishing: "Издательские услуги",
 }
 
 export const categoryOrder: AddonCategory[] = [
@@ -43,6 +47,8 @@ export const categoryOrder: AddonCategory[] = [
   "security",
   "support",
   "devices",
+  "lifecycle",
+  "publishing",
 ]
 
 export const addonsCatalog: CatalogAddon[] = [
@@ -476,6 +482,212 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Фоновое местоположение",
     description:
       "Получайте данные о местоположении устройства, пока приложение работает в фоновом режиме. Вы можете хранить эти данные.",
+    price: "49 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "background-service",
+    category: "devices",
+    icon: "Smartphone",
+    iconColor: "text-indigo-400",
+    title: "Фоновое приложение как служба",
+    description:
+      "Запуск приложения в фоновом режиме в качестве службы. Это позволит поддерживать соединение через сокет даже при свернутом приложении.",
+    price: "99 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "device-contacts",
+    category: "devices",
+    icon: "Contact",
+    iconColor: "text-rose-400",
+    title: "Контакты с коренным населением",
+    description:
+      "Получите все контакты с устройства. Вы можете использовать это для заполнения форм или отображения автозаполнения.",
+    price: "29 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "haptic-feedback",
+    category: "devices",
+    icon: "letter:Ч",
+    title: "Тактильная обратная связь",
+    description:
+      "Использование тактильной обратной связи может задействовать чувство осязания и привнести в ваше приложение или игру знакомство.",
+    price: "29 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "tv-support",
+    category: "devices",
+    icon: "MonitorPlay",
+    iconColor: "text-gray-300",
+    title: "Поддержка ТВ",
+    description:
+      "Добавлена поддержка смарт-телевизоров на базе Android. Благодаря этой функции конвертированные приложения смогут работать на ТВ.",
+    action: "contact",
+  },
+  {
+    id: "bluetooth",
+    category: "devices",
+    icon: "Bluetooth",
+    iconColor: "text-blue-400",
+    title: "Подключение по Bluetooth",
+    description:
+      "Теперь вы можете легко обнаруживать находящиеся поблизости устройства Bluetooth прямо из приложения. Сканируйте, сопрягайте и...",
+    price: "199 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "file-manager",
+    category: "devices",
+    icon: "FolderDown",
+    iconColor: "text-blue-400",
+    title: "Скачать файловый менеджер",
+    description:
+      "Управляйте всеми загруженными файлами без труда в одном удобном месте. Благодаря этой функции вы можете организовывать и...",
+    price: "99 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "beacons",
+    category: "devices",
+    icon: "letter:Б",
+    title: "Поддержка маяков",
+    description:
+      "Добавьте в свое мобильное приложение мощные возможности определения близости с помощью нашего дополнения для поддержки...",
+    action: "contact",
+  },
+  {
+    id: "own-storage",
+    category: "devices",
+    icon: "HardDrive",
+    iconColor: "text-gray-300",
+    title: "Собственное хранилище данных",
+    description:
+      "Приложение поддерживает сохранение настроек и данных непосредственно на устройство с использованием встроенных механизмов х...",
+    price: "49 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "nfc-support",
+    category: "devices",
+    icon: "letter:Н",
+    title: "Поддержка NFC (ближней бесконтактной связи).",
+    description:
+      "Считывайте и записывайте NFC-метки непосредственно из вашего веб-приложения на Android и iOS. Запускайте действия с NFC на ваш...",
+    price: "99 евро",
+    priceNote: "один раз",
+    badge: "premium-start",
+    action: "update",
+  },
+  {
+    id: "auto-launch",
+    category: "devices",
+    icon: "PlayCircle",
+    iconColor: "text-emerald-400",
+    title: "Автоматический запуск приложения",
+    description:
+      "Улучшите производительность своего приложения с помощью новой функции «Автоматический запуск приложения», разработанной для...",
+    price: "29 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "app-update-lifecycle",
+    category: "lifecycle",
+    icon: "RefreshCw",
+    iconColor: "text-violet-400",
+    title: "Обновление приложения",
+    description:
+      "Эта функция позволяет пользователям обновлять приложение напрямую, не выходя из него. Когда в Play Store появится новая версия.",
+    price: "29 евро",
+    priceNote: "один раз",
+    badge: "premium",
+    action: "add",
+  },
+  {
+    id: "app-review-lifecycle",
+    category: "lifecycle",
+    icon: "Search",
+    iconColor: "text-purple-400",
+    title: "Обзор приложения",
+    description:
+      "Вы можете отобразить запрос на проверку в Play Store непосредственно в самом приложении, вместо перенаправления в Play Store. По...",
+    price: "29 евро",
+    priceNote: "один раз",
+    badge: "premium",
+    action: "add",
+  },
+  {
+    id: "background-service-lifecycle",
+    category: "lifecycle",
+    icon: "Smartphone",
+    iconColor: "text-indigo-400",
+    title: "Фоновое приложение как служба",
+    description:
+      "Запуск приложения в фоновом режиме в качестве службы. Это позволит поддерживать соединение через сокет даже при свернутом приложении.",
+    price: "99 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "playstore-publishing",
+    category: "publishing",
+    icon: "PlayCircle",
+    iconColor: "text-green-400",
+    title: "Сервис публикации Playstore",
+    description:
+      "Разместите свое приложение в Google Play Store с нашей экспертной поддержкой по публикации. Комплексная помощь в публикации: в...",
+    badge: "included",
+    action: "settings",
+  },
+  {
+    id: "amazon-appstore",
+    category: "publishing",
+    icon: "ShoppingBag",
+    iconColor: "text-sky-400",
+    title: "Сервис публикации приложений Amazon App Store",
+    description:
+      "Легко публикуйте свое приложение в Amazon Appstore с помощью нашей комплексной поддержки публикации. Это дополнение включ...",
+    price: "49 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "samsung-galaxy-store",
+    category: "publishing",
+    icon: "Smartphone",
+    iconColor: "text-pink-400",
+    title: "Издательская служба Samsung Galaxy Store",
+    description:
+      "Благодаря нашей комплексной поддержке публикации, вы сможете без труда разместить свое приложение в Samsung Galaxy Store. Это д...",
+    price: "49 евро",
+    priceNote: "один раз",
+    action: "add",
+  },
+  {
+    id: "huawei-publishing",
+    category: "publishing",
+    icon: "letter:华",
+    title: "HUAWEI Publishing Services",
+    description: "Аккаунт разработчика будет вашим. Мы создадим скриншоты приложения, если у вас их нет.",
+    action: "contact",
+  },
+  {
+    id: "xiaomi-publishing",
+    category: "publishing",
+    icon: "letter:X",
+    title: "Издательская служба Xiaomi",
+    description:
+      "Разместите свое приложение в Xiaomi Store с нашей экспертной поддержкой по публикации. Комплексная помощь в публикации: выделе...",
     price: "49 евро",
     priceNote: "один раз",
     action: "add",

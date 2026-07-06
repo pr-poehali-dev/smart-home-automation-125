@@ -34,12 +34,14 @@ export default function AddonsMarketplaceSection({ state, update }: Props) {
   const popular = addonsCatalog.filter((a) => a.popular)
 
   const filtered = useMemo(() => {
-    return addonsCatalog.filter((a) => {
-      if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false
-      if (tab === "added") return addedIds.includes(a.id)
-      if (tab === "included") return a.badge === "included"
-      return true
-    })
+    return addonsCatalog
+      .filter((a) => a.id !== "playstore-publishing")
+      .filter((a) => {
+        if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false
+        if (tab === "added") return addedIds.includes(a.id)
+        if (tab === "included") return a.badge === "included"
+        return true
+      })
   }, [search, tab, addedIds])
 
   const byCategory = categoryOrder
