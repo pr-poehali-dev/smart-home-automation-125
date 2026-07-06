@@ -44,6 +44,11 @@ export interface BuilderState {
   themeColor: string
   pushEnabled: boolean
   offlineEnabled: boolean
+  pushProvider: "firebase" | "onesignal"
+  oneSignalAppId: string
+  oneSignalRestApiKey: string
+  notificationIconSet: string
+  notificationIconName: string
 
   uiTheme: "light" | "dark" | "system"
   uiCustomFont: boolean
@@ -112,6 +117,11 @@ export const defaultBuilderState: BuilderState = {
   themeColor: "#ef4444",
   pushEnabled: false,
   offlineEnabled: false,
+  pushProvider: "firebase",
+  oneSignalAppId: "",
+  oneSignalRestApiKey: "",
+  notificationIconSet: "lucide",
+  notificationIconName: "Bell",
 
   uiTheme: "system",
   uiCustomFont: false,

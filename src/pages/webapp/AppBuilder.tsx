@@ -99,6 +99,13 @@ export default function AppBuilder() {
           splash_color: state.splashColor,
           push_enabled: state.pushEnabled,
           offline_enabled: state.offlineEnabled,
+          push_provider: state.pushProvider,
+          fcm_server_key: state.pushProvider === "firebase" ? state.fcmServerKey : undefined,
+          onesignal_app_id: state.pushProvider === "onesignal" ? state.oneSignalAppId : undefined,
+          onesignal_rest_api_key:
+            state.pushProvider === "onesignal" ? state.oneSignalRestApiKey : undefined,
+          notification_icon_set: state.notificationIconSet,
+          notification_icon_name: state.notificationIconName,
         }),
       })
       const data = await res.json()
