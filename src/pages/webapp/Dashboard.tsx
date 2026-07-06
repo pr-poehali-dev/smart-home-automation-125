@@ -40,6 +40,7 @@ export default function Dashboard() {
 
   const [builds, setBuilds] = useState<Build[]>([])
   const [isLoadingBuilds, setIsLoadingBuilds] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
@@ -57,16 +58,19 @@ export default function Dashboard() {
     }
   }, [authLoading, user, navigate])
 
-  const loadBuilds = async () => {
-    setIsLoadingBuilds(true)
+  const loadBuilds = async (isManualRefresh = false) => {
+    if (isManualRefresh) setIsRefreshing(true)
+    else setIsLoadingBuilds(true)
     try {
       const res = await fetch(BUILDS_URL, { headers: { ...authHeaders() } })
       if (res.ok) {
         const data = await res.json()
         setBuilds(Array.isArray(data) ? data : data.builds || [])
+        if (isManualRefresh) toast({ title: "Список обновлён" })
       }
     } finally {
       setIsLoadingBuilds(false)
+      setIsRefreshing(false)
     }
   }
 
@@ -305,10 +309,22 @@ export default function Dashboard() {
         </div>
 
         <div className="lg:col-span-3">
-          <h2 className="text-white font-orbitron text-xl font-bold mb-4 flex items-center gap-2">
-            <Icon name="List" size={20} className="text-red-500" />
-            Мои сборки
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-white font-orbitron text-xl font-bold flex items-center gap-2">
+              <Icon name="List" size={20} className="text-red-500" />
+              Мои сборки
+            </h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => loadBuilds(true)}
+              disabled={isRefreshing}
+              className="border-red-500/30 text-white hover:bg-red-500/10 bg-transparent"
+            >
+              <Icon name="RefreshCw" size={14} className={isRefreshing ? "animate-spin" : ""} />
+              Обновить
+            </Button>
+          </div>
 
           {isLoadingBuilds ? (
             <div className="flex justify-center py-12">
