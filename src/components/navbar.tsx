@@ -34,6 +34,12 @@ export function Navbar() {
               >
                 Возможности
               </a>
+              <a
+                href="/pricing"
+                className="font-geist text-white hover:text-red-500 transition-colors duration-200"
+              >
+                Тарифы
+              </a>
             </div>
           </div>
 
@@ -65,6 +71,13 @@ export function Navbar() {
                 onClick={() => setIsOpen(false)}
               >
                 Возможности
+              </a>
+              <a
+                href="/pricing"
+                className="block px-3 py-2 font-geist text-white hover:text-red-500 transition-colors duration-200"
+                onClick={() => setIsOpen(false)}
+              >
+                Тарифы
               </a>
               <div className="px-3 py-2">
                 <Button onClick={goToApp} className="w-full bg-red-500 hover:bg-red-600 text-white font-geist border-0">

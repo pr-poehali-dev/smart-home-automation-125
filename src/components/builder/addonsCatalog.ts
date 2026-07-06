@@ -60,7 +60,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Touch ID / Биометрическая аутентификация",
     description:
       "Интегрируйте Touch ID и аутентификацию по отпечатку пальца Android в ваше приложение. Интегрируется напрямую с любым существующим способом входа.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -74,7 +74,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Вход через социальные сети",
     description:
       "Процесс авторизации осуществляется через соответствующие собственные SDK, а не через веб-представление. Поддерживаются Facebook, Google и другие.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -88,7 +88,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Google Firebase Analytics",
     description:
       "В основе Firebase лежит Google Analytics — решение для неограниченного анализа данных, доступное бесплатно. Аналитические отчеты в реальном времени.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -102,7 +102,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Экран регистрации",
     description:
       "Улучшите пользовательский опыт вашего приложения с помощью экранов адаптации! Это дополнение позволяет отображать серию на старте.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -125,7 +125,7 @@ export const addonsCatalog: CatalogAddon[] = [
     iconColor: "text-gray-300",
     title: "Ярлык приложения",
     description: "Добавьте ярлык приложения для быстрого доступа через значок приложения.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -138,7 +138,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Вторичная навигация",
     description:
       "Дополнительные навигационные меню играют решающую роль в улучшении пользовательского опыта, обеспечивая эффективный доступ к разделам.",
-    price: "19 евро",
+    price: "1 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -151,7 +151,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Обзор приложения",
     description:
       "Вы можете отобразить запрос на проверку в Play Store непосредственно в самом приложении, вместо перенаправления в Play Store.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -164,7 +164,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Пользовательский медиаплеер",
     description:
       "Функциональность медиаплеера для Android отображается в панели уведомлений и включает элементы управления воспроизведением.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -176,7 +176,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Карта предложений",
     description:
       "Это компонент пользовательского интерфейса, обычно используемый для представления пользователям специальных акций и информации.",
-    price: "19 евро",
+    price: "1 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -189,7 +189,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Динамическая иконка приложения",
     description:
       "Дополнение Dynamic App Icon позволяет пользователям динамически обновлять значки своих приложений. Полезно для сезонных акций.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -201,7 +201,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Плавающее меню действий",
     description:
       "Плавающее меню действий позволяет создавать настраиваемые меню действий в мобильных приложениях.",
-    price: "19 евро",
+    price: "1 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -212,7 +212,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Многоцелевой транспорт",
     description:
       "Модальное окно в полноэкранном режиме, отображаемое при запуске приложения — идеально подходит для стимулирования действий.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     badge: "premium-start",
     action: "update",
@@ -225,7 +225,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Виджеты главного экрана",
     description:
       "Добавьте в свое приложение нативные виджеты для главного экрана, которые помогут поддерживать узнаваемость вашего бренда.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "/год",
     action: "subscribe",
   },
@@ -247,7 +247,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Встроенные покупки (IAP)",
     description:
       "Интегрируйте API встроенных покупок в ваше Android-приложение, чтобы обеспечить оплату цифровых товаров внутри приложения.",
-    price: "99 евро",
+    price: "9 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -258,7 +258,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Доходы Cat",
     description:
       "Интегрируйте плагин RevenueCat в свои Android-приложения для удобного управления внутриигровыми покупками и подписками.",
-    price: "99 евро",
+    price: "9 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -269,7 +269,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Мета-реклама (Facebook)",
     description:
       "Интеграция Meta (Facebook) Ads помогает монетизировать ваше приложение, показывая высокоцелевую рекламу из обширной рекламной сети.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -301,7 +301,7 @@ export const addonsCatalog: CatalogAddon[] = [
     icon: "Keyboard",
     title: "Домофон",
     description: "Интегрируйте Intercom непосредственно в наши приложения для повышения вовлеченности пользователей.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     badge: "premium-start",
     action: "update",
@@ -313,7 +313,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Sendbird",
     description:
       "Интегрируйте встроенный SDK чата Sendbird в свое приложение для обмена сообщениями в реальном времени, push-уведомлений.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     badge: "premium-start",
     action: "add",
@@ -326,7 +326,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Google Firebase Analytics",
     description:
       "В основе Firebase лежит Google Analytics — решение для неограниченного анализа данных, доступное бесплатно.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -339,7 +339,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Мероприятия, связанные с приложением Facebook",
     description:
       "Собирайте аналитические данные, измеряйте эффективность рекламы в Facebook и создавайте аудитории для таргетинга.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -351,7 +351,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "AppsFlyer",
     description:
       "Нативный плагин AppsFlyer предоставляет функциональность для установки приложений, событий внутри приложений и записи пользователей.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -363,7 +363,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Touch ID / Биометрическая аутентификация",
     description:
       "Интегрируйте Touch ID и аутентификацию по отпечатку пальца Android в ваше приложение. Интегрируется напрямую.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -376,7 +376,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Вход через социальные сети",
     description:
       "Процесс авторизации осуществляется через соответствующие собственные SDK, а не через веб-представление.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -388,7 +388,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Truecaller SDK",
     description:
       "Добавьте аутентификацию Truecaller в свое приложение с помощью единого JavaScript API. Работает как на Android, так и на iOS.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -409,7 +409,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Кодовый замок",
     description:
       "Функция ввода пароля позволяет добавить дополнительный уровень безопасности вашему приложению.",
-    price: "99 евро",
+    price: "9 900 ₽",
     priceNote: "один раз",
     badge: "premium-start",
     action: "update",
@@ -421,7 +421,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Auth0",
     description:
       "WebToNative теперь поддерживает Auth0. Упростите аутентификацию пользователей и управление идентификацией.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -431,7 +431,7 @@ export const addonsCatalog: CatalogAddon[] = [
     icon: "Keyboard",
     title: "Домофон",
     description: "Интегрируйте Intercom непосредственно в наши приложения для повышения вовлеченности пользователей.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     badge: "premium-start",
     action: "update",
@@ -443,7 +443,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Sendbird",
     description:
       "Интегрируйте встроенный SDK чата Sendbird в свое приложение для обмена сообщениями в реальном времени.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     badge: "premium-start",
     action: "add",
@@ -456,7 +456,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Touch ID / Биометрическая аутентификация",
     description:
       "Интегрируйте Touch ID и аутентификацию по отпечатку пальца Android в ваше приложение.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -469,7 +469,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Обновление приложения",
     description:
       "Эта функция позволяет пользователям обновлять приложение напрямую, не выходя из него. Когда в Play Store появится новая версия.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -482,7 +482,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Фоновое местоположение",
     description:
       "Получайте данные о местоположении устройства, пока приложение работает в фоновом режиме. Вы можете хранить эти данные.",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -494,7 +494,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Фоновое приложение как служба",
     description:
       "Запуск приложения в фоновом режиме в качестве службы. Это позволит поддерживать соединение через сокет даже при свернутом приложении.",
-    price: "99 евро",
+    price: "9 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -506,7 +506,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Контакты с коренным населением",
     description:
       "Получите все контакты с устройства. Вы можете использовать это для заполнения форм или отображения автозаполнения.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -517,7 +517,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Тактильная обратная связь",
     description:
       "Использование тактильной обратной связи может задействовать чувство осязания и привнести в ваше приложение или игру знакомство.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -539,7 +539,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Подключение по Bluetooth",
     description:
       "Теперь вы можете легко обнаруживать находящиеся поблизости устройства Bluetooth прямо из приложения. Сканируйте, сопрягайте и...",
-    price: "199 евро",
+    price: "19 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -551,7 +551,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Скачать файловый менеджер",
     description:
       "Управляйте всеми загруженными файлами без труда в одном удобном месте. Благодаря этой функции вы можете организовывать и...",
-    price: "99 евро",
+    price: "9 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -572,7 +572,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Собственное хранилище данных",
     description:
       "Приложение поддерживает сохранение настроек и данных непосредственно на устройство с использованием встроенных механизмов х...",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -583,7 +583,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Поддержка NFC (ближней бесконтактной связи).",
     description:
       "Считывайте и записывайте NFC-метки непосредственно из вашего веб-приложения на Android и iOS. Запускайте действия с NFC на ваш...",
-    price: "99 евро",
+    price: "9 900 ₽",
     priceNote: "один раз",
     badge: "premium-start",
     action: "update",
@@ -596,7 +596,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Автоматический запуск приложения",
     description:
       "Улучшите производительность своего приложения с помощью новой функции «Автоматический запуск приложения», разработанной для...",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -608,7 +608,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Обновление приложения",
     description:
       "Эта функция позволяет пользователям обновлять приложение напрямую, не выходя из него. Когда в Play Store появится новая версия.",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -621,7 +621,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Обзор приложения",
     description:
       "Вы можете отобразить запрос на проверку в Play Store непосредственно в самом приложении, вместо перенаправления в Play Store. По...",
-    price: "29 евро",
+    price: "2 900 ₽",
     priceNote: "один раз",
     badge: "premium",
     action: "add",
@@ -634,7 +634,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Фоновое приложение как служба",
     description:
       "Запуск приложения в фоновом режиме в качестве службы. Это позволит поддерживать соединение через сокет даже при свернутом приложении.",
-    price: "99 евро",
+    price: "9 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -657,7 +657,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Сервис публикации приложений Amazon App Store",
     description:
       "Легко публикуйте свое приложение в Amazon Appstore с помощью нашей комплексной поддержки публикации. Это дополнение включ...",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -669,7 +669,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Издательская служба Samsung Galaxy Store",
     description:
       "Благодаря нашей комплексной поддержке публикации, вы сможете без труда разместить свое приложение в Samsung Galaxy Store. Это д...",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     action: "add",
   },
@@ -688,7 +688,7 @@ export const addonsCatalog: CatalogAddon[] = [
     title: "Издательская служба Xiaomi",
     description:
       "Разместите свое приложение в Xiaomi Store с нашей экспертной поддержкой по публикации. Комплексная помощь в публикации: выделе...",
-    price: "49 евро",
+    price: "4 900 ₽",
     priceNote: "один раз",
     action: "add",
   },

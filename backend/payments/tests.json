@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET plans без токена",
+      "method": "GET",
+      "path": "/?action=plans",
+      "expectedStatus": 401
+    },
+    {
+      "name": "GET subscription без токена",
+      "method": "GET",
+      "path": "/?action=subscription",
+      "expectedStatus": 401
+    },
+    {
+      "name": "POST create без токена",
+      "method": "POST",
+      "path": "/?action=create",
+      "body": {"plan_code": "start", "return_url": "https://example.com"},
+      "expectedStatus": 401
+    },
+    {
+      "name": "Webhook с некорректными данными",
+      "method": "POST",
+      "path": "/?action=webhook",
+      "body": {},
+      "expectedStatus": 400
+    }
+  ]
+}

@@ -177,6 +177,20 @@ def handler(event: dict, context) -> dict:
                 return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Не указан id сборки'})}
 
             cur.execute(
+                f"""
+                SELECT id FROM subscriptions
+                WHERE user_id = {user_id} AND status = 'active' AND expires_at > NOW()
+                LIMIT 1
+                """
+            )
+            if not cur.fetchone():
+                return {
+                    'statusCode': 402,
+                    'headers': headers,
+                    'body': json.dumps({'error': 'Для скачивания APK нужно оформить тариф', 'needs_payment': True}),
+                }
+
+            cur.execute(
                 f"SELECT apk_url, app_name FROM builds WHERE id = {int(build_id)} AND user_id = {user_id} AND status = 'ready'"
             )
             row = cur.fetchone()

@@ -17,8 +17,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
-import { BUILDS_URL, authHeaders } from "@/lib/api"
+import { BUILDS_URL, PAYMENTS_URL, authHeaders } from "@/lib/api"
 import Icon from "@/components/ui/icon"
+
+interface Subscription {
+  plan_code: string
+  plan_name: string
+  builds_used: number
+  builds_limit: number | null
+  expires_at: string
+}
 
 interface Build {
   id: number
@@ -54,6 +62,7 @@ export default function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
 
   const [siteUrl, setSiteUrl] = useState("")
   const [appName, setAppName] = useState("")
@@ -87,6 +96,17 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user) loadBuilds()
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    fetch(`${PAYMENTS_URL}?action=subscription`, { headers: { ...authHeaders() } })
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        setSubscription(data)
+      })
+      .catch(() => {})
   }, [user])
 
   const handleCreateBuild = async (e: React.FormEvent) => {
@@ -148,6 +168,15 @@ export default function Dashboard() {
       const res = await fetch(`${BUILDS_URL}?action=download&id=${id}`, {
         headers: { ...authHeaders() },
       })
+      if (res.status === 402) {
+        toast({
+          title: "Нужен тариф",
+          description: "Чтобы скачать готовый APK, оформите тариф",
+          variant: "destructive",
+        })
+        navigate("/pricing")
+        return
+      }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error || "Не удалось скачать APK")
@@ -203,7 +232,21 @@ export default function Dashboard() {
           <h1 className="font-orbitron text-xl font-bold text-white">
             Build<span className="text-red-500">APK</span>
           </h1>
-          <DropdownMenu>
+          <div className="flex items-center gap-3">
+            {subscription ? (
+              <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30">
+                Тариф «{subscription.plan_name}»
+              </Badge>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => navigate("/pricing")}
+                className="bg-red-500 hover:bg-red-600 text-white border-0"
+              >
+                Оформить тариф
+              </Button>
+            )}
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 outline-none">
                 <Avatar className="h-9 w-9 border border-red-500/30">
@@ -266,7 +309,8 @@ export default function Dashboard() {
                 Выйти
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+            </DropdownMenu>
+          </div>
         </div>
       </nav>
 

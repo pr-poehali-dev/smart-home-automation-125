@@ -12,6 +12,8 @@ interface AuthContextType {
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, name: string) => Promise<void>
+  verifyCode: (email: string, code: string) => Promise<void>
+  resendCode: (email: string) => Promise<void>
   logout: () => void
 }
 
@@ -55,7 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ action: "login", email, password }),
     })
     const data = await res.json()
-    if (!res.ok) throw new Error(data.error || "Не удалось войти")
+    if (!res.ok) {
+      const err = new Error(data.error || "Не удалось войти") as Error & { needsVerification?: boolean }
+      if (data.needs_verification) err.needsVerification = true
+      throw err
+    }
     setToken(data.token)
     setUser(data.user)
   }
@@ -68,8 +74,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error || "Не удалось зарегистрироваться")
+  }
+
+  const verifyCode = async (email: string, code: string) => {
+    const res = await fetch(AUTH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "verify", email, code }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || "Не удалось подтвердить код")
     setToken(data.token)
     setUser(data.user)
+  }
+
+  const resendCode = async (email: string) => {
+    const res = await fetch(AUTH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "resend_code", email }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || "Не удалось отправить код повторно")
   }
 
   const logout = () => {
@@ -78,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, verifyCode, resendCode, logout }}>
       {children}
     </AuthContext.Provider>
   )

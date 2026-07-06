@@ -5,11 +5,20 @@ import hashlib
 import hmac
 import base64
 import time
+import secrets
+import datetime
 import psycopg2
+
+from mail import send_verification_code
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'dev-secret')
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+CODE_TTL_MINUTES = 15
+
+
+def generate_code() -> str:
+    return f'{secrets.randbelow(1000000):06d}'
 
 
 def escape(value: str) -> str:
@@ -125,31 +134,109 @@ def handler(event: dict, context) -> dict:
             if len(password) < 6:
                 return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Пароль должен быть не короче 6 символов'})}
 
-            cur.execute(f"SELECT id FROM users WHERE email = '{escape(email)}'")
-            if cur.fetchone():
+            cur.execute(f"SELECT id, is_verified FROM users WHERE email = '{escape(email)}'")
+            existing = cur.fetchone()
+            if existing and existing[1]:
                 return {'statusCode': 409, 'headers': headers, 'body': json.dumps({'error': 'Пользователь с таким email уже существует'})}
 
             password_hash = hash_password(password)
-            cur.execute(
-                f"INSERT INTO users (email, password_hash, name) VALUES ('{escape(email)}', '{escape(password_hash)}', '{escape(name)}') RETURNING id, email, name"
-            )
+            code = generate_code()
+            expires = datetime.datetime.utcnow() + datetime.timedelta(minutes=CODE_TTL_MINUTES)
+
+            if existing:
+                cur.execute(
+                    f"""
+                    UPDATE users SET password_hash = '{escape(password_hash)}', name = '{escape(name)}',
+                        verification_code = '{code}', verification_code_expires = '{expires.isoformat()}'
+                    WHERE id = {existing[0]}
+                    RETURNING id, email
+                    """
+                )
+            else:
+                cur.execute(
+                    f"""
+                    INSERT INTO users (email, password_hash, name, verification_code, verification_code_expires)
+                    VALUES ('{escape(email)}', '{escape(password_hash)}', '{escape(name)}', '{code}', '{expires.isoformat()}')
+                    RETURNING id, email
+                    """
+                )
             row = cur.fetchone()
             conn.commit()
-            token = create_token(row[0], row[1])
+
+            try:
+                send_verification_code(row[1], code)
+            except Exception as e:
+                return {'statusCode': 502, 'headers': headers, 'body': json.dumps({'error': f'Не удалось отправить код на почту: {e}'})}
+
             return {
                 'statusCode': 201,
                 'headers': headers,
-                'body': json.dumps({'token': token, 'user': {'id': row[0], 'email': row[1], 'name': row[2]}}),
+                'body': json.dumps({'user_id': row[0], 'email': row[1], 'message': 'Код подтверждения отправлен на почту'}),
             }
+
+        if action == 'verify':
+            email = (body.get('email') or '').strip().lower()
+            code = (body.get('code') or '').strip()
+
+            cur.execute(
+                f"SELECT id, email, name, verification_code, verification_code_expires FROM users WHERE email = '{escape(email)}'"
+            )
+            row = cur.fetchone()
+            if not row:
+                return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'Пользователь не найден'})}
+
+            user_id, user_email, name, stored_code, expires_at = row
+            if not stored_code or stored_code != code:
+                return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Неверный код подтверждения'})}
+            if not expires_at or expires_at < datetime.datetime.utcnow():
+                return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Код истёк, запросите новый'})}
+
+            cur.execute(
+                f"UPDATE users SET is_verified = true, verification_code = NULL, verification_code_expires = NULL WHERE id = {user_id}"
+            )
+            conn.commit()
+
+            token = create_token(user_id, user_email)
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps({'token': token, 'user': {'id': user_id, 'email': user_email, 'name': name}}),
+            }
+
+        if action == 'resend_code':
+            email = (body.get('email') or '').strip().lower()
+            cur.execute(f"SELECT id, is_verified FROM users WHERE email = '{escape(email)}'")
+            row = cur.fetchone()
+            if not row:
+                return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'Пользователь не найден'})}
+            if row[1]:
+                return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Email уже подтверждён'})}
+
+            code = generate_code()
+            expires = datetime.datetime.utcnow() + datetime.timedelta(minutes=CODE_TTL_MINUTES)
+            cur.execute(
+                f"UPDATE users SET verification_code = '{code}', verification_code_expires = '{expires.isoformat()}' WHERE id = {row[0]}"
+            )
+            conn.commit()
+
+            try:
+                send_verification_code(email, code)
+            except Exception as e:
+                return {'statusCode': 502, 'headers': headers, 'body': json.dumps({'error': f'Не удалось отправить код на почту: {e}'})}
+
+            return {'statusCode': 200, 'headers': headers, 'body': json.dumps({'message': 'Код отправлен повторно'})}
 
         if action == 'login':
             email = (body.get('email') or '').strip().lower()
             password = body.get('password') or ''
 
-            cur.execute(f"SELECT id, email, name, password_hash FROM users WHERE email = '{escape(email)}'")
+            cur.execute(f"SELECT id, email, name, password_hash, is_verified FROM users WHERE email = '{escape(email)}'")
             row = cur.fetchone()
             if not row or not verify_password(password, row[3]):
                 return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Неверный email или пароль'})}
+
+            if not row[4]:
+                return {'statusCode': 403, 'headers': headers, 'body': json.dumps({'error': 'Email не подтверждён', 'needs_verification': True})}
 
             token = create_token(row[0], row[1])
             return {

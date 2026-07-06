@@ -24,6 +24,7 @@ export function CTASection() {
               Собрать APK бесплатно
             </Button>
             <Button
+              onClick={() => navigate("/pricing")}
               size="lg"
               variant="outline"
               className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg px-8 py-4 bg-transparent"

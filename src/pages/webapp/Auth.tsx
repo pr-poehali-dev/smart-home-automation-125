@@ -10,7 +10,7 @@ import Icon from "@/components/ui/icon"
 
 export default function Auth() {
   const navigate = useNavigate()
-  const { login, register } = useAuth()
+  const { login, register, verifyCode, resendCode } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -21,6 +21,10 @@ export default function Auth() {
   const [regEmail, setRegEmail] = useState("")
   const [regPassword, setRegPassword] = useState("")
 
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
+  const [verificationCode, setVerificationCode] = useState("")
+  const [isResending, setIsResending] = useState(false)
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -28,11 +32,17 @@ export default function Auth() {
       await login(loginEmail, loginPassword)
       navigate("/dashboard")
     } catch (err) {
-      toast({
-        title: "Ошибка входа",
-        description: err instanceof Error ? err.message : "Попробуйте снова",
-        variant: "destructive",
-      })
+      const error = err as Error & { needsVerification?: boolean }
+      if (error.needsVerification) {
+        setPendingEmail(loginEmail)
+        toast({ title: "Подтвердите email", description: "Введите код, отправленный вам на почту" })
+      } else {
+        toast({
+          title: "Ошибка входа",
+          description: error.message || "Попробуйте снова",
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsLoading(false)
     }
@@ -43,7 +53,8 @@ export default function Auth() {
     setIsLoading(true)
     try {
       await register(regEmail, regPassword, regName)
-      navigate("/dashboard")
+      setPendingEmail(regEmail)
+      toast({ title: "Проверьте почту", description: "Мы отправили код подтверждения на ваш email" })
     } catch (err) {
       toast({
         title: "Ошибка регистрации",
@@ -53,6 +64,93 @@ export default function Auth() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!pendingEmail) return
+    setIsLoading(true)
+    try {
+      await verifyCode(pendingEmail, verificationCode)
+      navigate("/dashboard")
+    } catch (err) {
+      toast({
+        title: "Ошибка подтверждения",
+        description: err instanceof Error ? err.message : "Попробуйте снова",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleResend = async () => {
+    if (!pendingEmail) return
+    setIsResending(true)
+    try {
+      await resendCode(pendingEmail)
+      toast({ title: "Код отправлен повторно" })
+    } catch (err) {
+      toast({
+        title: "Ошибка",
+        description: err instanceof Error ? err.message : "Попробуйте снова",
+        variant: "destructive",
+      })
+    } finally {
+      setIsResending(false)
+    }
+  }
+
+  if (pendingEmail) {
+    return (
+      <div className="dark min-h-screen bg-black flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="font-orbitron text-3xl font-bold text-white">
+              Build<span className="text-red-500">APK</span>
+            </h1>
+            <p className="text-gray-400 mt-2">Подтверждение email</p>
+          </div>
+
+          <div className="bg-neutral-950 border border-red-500/20 rounded-lg p-6">
+            <p className="text-gray-300 text-sm mb-4">
+              Мы отправили код подтверждения на <span className="text-white">{pendingEmail}</span>. Введите его ниже.
+            </p>
+            <form onSubmit={handleVerify} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="verify-code" className="text-white">Код из письма</Label>
+                <Input
+                  id="verify-code"
+                  type="text"
+                  placeholder="000000"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  className="bg-neutral-900 border-red-500/20 text-white placeholder:text-gray-500 text-center tracking-widest text-lg"
+                  maxLength={6}
+                  required
+                />
+              </div>
+              <Button type="submit" disabled={isLoading} className="w-full bg-red-500 hover:bg-red-600 text-white border-0">
+                {isLoading ? <Icon name="Loader2" size={18} className="animate-spin" /> : "Подтвердить"}
+              </Button>
+            </form>
+            <button
+              onClick={handleResend}
+              disabled={isResending}
+              className="w-full text-center text-sm text-gray-400 hover:text-red-500 transition-colors mt-4"
+            >
+              {isResending ? "Отправляем..." : "Отправить код повторно"}
+            </button>
+            <button
+              onClick={() => setPendingEmail(null)}
+              className="w-full text-center text-sm text-gray-500 hover:text-white transition-colors mt-2"
+            >
+              ← Назад
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
