@@ -62,7 +62,8 @@ export default function Dashboard() {
     try {
       const res = await fetch(BUILDS_URL, { headers: { ...authHeaders() } })
       if (res.ok) {
-        setBuilds(await res.json())
+        const data = await res.json()
+        setBuilds(Array.isArray(data) ? data : data.builds || [])
       }
     } finally {
       setIsLoadingBuilds(false)
@@ -98,7 +99,21 @@ export default function Dashboard() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Не удалось создать сборку")
 
-      setBuilds((prev) => [data, ...prev])
+      const newBuild: Build = {
+        id: data.id,
+        site_url: siteUrl,
+        app_name: appName,
+        package_name: packageName || null,
+        icon_url: null,
+        splash_color: splashColor,
+        theme_color: themeColor,
+        push_enabled: pushEnabled,
+        offline_enabled: offlineEnabled,
+        status: data.status,
+        apk_url: null,
+        created_at: data.created_at,
+      }
+      setBuilds((prev) => [newBuild, ...prev])
       setSiteUrl("")
       setAppName("")
       setPackageName("")
