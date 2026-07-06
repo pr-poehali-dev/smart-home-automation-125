@@ -1,5 +1,6 @@
 import Icon from "@/components/ui/icon"
 import { BuilderState } from "./types"
+import SplashLottiePreview from "./SplashLottiePreview"
 
 interface Props {
   state: BuilderState
@@ -63,12 +64,37 @@ export default function PreviewPanel({ state }: Props) {
       </div>
 
       <div className="rounded-xl border border-red-500/10 bg-black p-4 flex flex-col items-center">
+        <p className="text-gray-500 text-[10px] tracking-wider mb-2">ПРЕДВАРИТЕЛЬНЫЙ ПРОСМОТР</p>
         <div
           className="w-32 h-56 rounded-2xl border-4 flex items-center justify-center overflow-hidden"
-          style={{ borderColor: state.themeColor || "#333", backgroundColor: state.splashColor || "#1A1025" }}
+          style={{
+            borderColor: "#333",
+            background: state.splashGradient
+              ? `linear-gradient(180deg, ${state.splashColor}, #000)`
+              : state.splashColor || "#1A1025",
+          }}
         >
-          {state.iconUrl ? (
-            <img src={state.iconUrl} alt="icon" className="w-10 h-10 rounded-lg" />
+          {state.splashType === "animation" && state.splashAssetUrl ? (
+            <SplashLottiePreview
+              url={state.splashAssetUrl}
+              loop={state.splashBehavior === "loop"}
+              className="w-16 h-16"
+            />
+          ) : state.splashType === "mp4" && state.splashAssetUrl ? (
+            <video
+              src={state.splashAssetUrl}
+              autoPlay
+              muted
+              loop={state.splashBehavior === "loop"}
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          ) : state.splashType === "full" && state.splashAssetUrl ? (
+            <img src={state.splashAssetUrl} alt="splash" className="w-full h-full object-cover" />
+          ) : state.splashType === "logo" && state.splashAssetUrl ? (
+            <img src={state.splashAssetUrl} alt="logo" className="w-16 h-16 rounded-xl object-cover" />
+          ) : state.iconUrl ? (
+            <img src={state.iconUrl} alt="icon" className="w-16 h-16 rounded-xl object-cover" />
           ) : (
             <Icon name="Smartphone" size={28} className="text-white/40" />
           )}
