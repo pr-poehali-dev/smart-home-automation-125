@@ -98,6 +98,7 @@ export default function AppBuilder() {
           site_url: state.siteUrl,
           app_name: state.appName,
           package_name: state.packageName,
+          icon_url: state.iconUrl,
           theme_color: state.themeColor,
           splash_color: state.splashColor,
           push_enabled: state.pushEnabled,
@@ -109,11 +110,14 @@ export default function AppBuilder() {
             state.pushProvider === "onesignal" ? state.oneSignalRestApiKey : undefined,
           notification_icon_set: state.notificationIconSet,
           notification_icon_name: state.notificationIconName,
+          addon_ids: state.addedAddonIds,
+          config: state,
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Не удалось создать сборку")
 
+      localStorage.removeItem("buildapk_draft")
       toast({ title: "Заявка создана!", description: `Сборка «${state.appName}» добавлена в очередь.` })
       navigate("/dashboard")
     } catch (err) {

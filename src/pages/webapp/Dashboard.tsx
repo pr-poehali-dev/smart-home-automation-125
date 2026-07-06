@@ -24,6 +24,7 @@ interface Build {
   status: "queued" | "building" | "ready" | "failed"
   apk_url: string | null
   created_at: string
+  addon_ids?: string[]
 }
 
 const statusMap: Record<Build["status"], { label: string; color: string }> = {
@@ -352,6 +353,12 @@ export default function Dashboard() {
                       <div className="min-w-0">
                         <p className="text-white font-semibold truncate">{build.app_name}</p>
                         <p className="text-gray-500 text-sm truncate">{build.site_url}</p>
+                        {!!build.addon_ids?.length && (
+                          <p className="text-gray-600 text-xs truncate flex items-center gap-1 mt-0.5">
+                            <Icon name="Puzzle" size={11} />
+                            Дополнений: {build.addon_ids.length}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
