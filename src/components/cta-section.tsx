@@ -7,11 +7,11 @@ export function CTASection() {
   const navigate = useNavigate()
 
   return (
-    <section className="py-24 px-6 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10">
+    <section className="py-24 px-6 bg-black">
       <div className="max-w-4xl mx-auto text-center">
         <div className="slide-up">
-          <h2 className="text-5xl font-bold text-foreground mb-6 font-sans text-balance">Соберите своё приложение прямо сейчас</h2>
-          <p className="text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto">
+          <h2 className="text-5xl font-bold text-white mb-6 font-sans text-balance">Соберите своё приложение прямо сейчас</h2>
+          <p className="text-xl text-gray-300 mb-10 leading-relaxed max-w-2xl mx-auto">
             Превратите сайт в Android-приложение за пару минут. Первая сборка — бесплатно,
             без установки Android Studio и без строчки кода.
           </p>
