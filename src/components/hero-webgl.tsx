@@ -2,9 +2,11 @@ import { Canvas, extend, useFrame } from "@react-three/fiber"
 import { useAspect, useTexture } from "@react-three/drei"
 import { useMemo, useRef, useState, useEffect } from "react"
 import * as THREE from "three"
+import heroTexture from "@/assets/hero-texture.png"
+import heroDepth from "@/assets/hero-depth.webp"
 
-const TEXTUREMAP = { src: "https://i.postimg.cc/XYwvXN8D/img-4.png" }
-const DEPTHMAP = { src: "https://i.postimg.cc/2SHKQh2q/raw-4.webp" }
+const TEXTUREMAP = { src: heroTexture }
+const DEPTHMAP = { src: heroDepth }
 
 extend(THREE as unknown as Record<string, unknown>)
 
