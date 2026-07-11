@@ -8,11 +8,14 @@ import urllib.request
 import urllib.error
 import psycopg2
 
+from mail import send_build_ready_email, send_build_failed_email
+
 DATABASE_URL = os.environ.get('DATABASE_URL')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'dev-secret')
 APK_BUILD_SERVER_URL = os.environ.get('APK_BUILD_SERVER_URL', '').rstrip('/')
 APK_BUILD_SERVER_TOKEN = os.environ.get('APK_BUILD_SERVER_TOKEN', '')
 BUILDS_FUNCTION_URL = os.environ.get('BUILDS_FUNCTION_URL', '')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', '').rstrip('/') or 'https://buildapk.ru'
 
 
 def escape(value: str) -> str:
@@ -158,13 +161,28 @@ def handler(event: dict, context) -> dict:
                 SET status = {sql_str(status)}, apk_url = {sql_str(apk_url)},
                     error_message = {sql_str(error_message)}, updated_at = NOW()
                 WHERE id = {int(build_id)}
-                RETURNING id
+                RETURNING id, app_name, user_id
                 """
             )
             row = cur.fetchone()
             conn.commit()
             if not row:
                 return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'Сборка не найдена'})}
+
+            if status in ('ready', 'failed'):
+                _build_id, app_name, owner_id = row
+                cur.execute(f"SELECT email FROM users WHERE id = {int(owner_id)}")
+                user_row = cur.fetchone()
+                if user_row and user_row[0]:
+                    dashboard_url = f"{FRONTEND_URL}/dashboard"
+                    try:
+                        if status == 'ready':
+                            send_build_ready_email(user_row[0], app_name, dashboard_url)
+                        else:
+                            send_build_failed_email(user_row[0], app_name, dashboard_url, error_message or '')
+                    except Exception:
+                        pass
+
             return {'statusCode': 200, 'headers': headers, 'body': json.dumps({'success': True})}
 
         user_id = get_user_id(event)

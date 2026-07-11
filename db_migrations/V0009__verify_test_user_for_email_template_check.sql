@@ -1,0 +1,1 @@
+UPDATE users SET is_verified = true WHERE email = 'test_mail_check_1783763017@yandex.ru';
