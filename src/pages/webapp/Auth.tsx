@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,6 +10,8 @@ import Icon from "@/components/ui/icon"
 
 export default function Auth() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const referralCode = searchParams.get("ref") || undefined
   const { login, register, verifyCode, resendCode } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
@@ -52,7 +54,7 @@ export default function Auth() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      await register(regEmail, regPassword, regName)
+      await register(regEmail, regPassword, regName, referralCode)
       setPendingEmail(regEmail)
       toast({ title: "Проверьте почту", description: "Мы отправили код подтверждения на ваш email" })
     } catch (err) {
@@ -203,6 +205,12 @@ export default function Auth() {
             </TabsContent>
 
             <TabsContent value="register">
+              {referralCode && (
+                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2 mt-4 text-xs text-red-400">
+                  <Icon name="Gift" size={14} />
+                  Вы регистрируетесь по приглашению друга
+                </div>
+              )}
               <form onSubmit={handleRegister} className="space-y-4 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="reg-name" className="text-white">Имя</Label>

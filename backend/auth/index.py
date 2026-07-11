@@ -21,6 +21,10 @@ def generate_code() -> str:
     return f'{secrets.randbelow(1000000):06d}'
 
 
+def generate_referral_code() -> str:
+    return secrets.token_hex(4).upper()
+
+
 def escape(value: str) -> str:
     return value.replace("'", "''")
 
@@ -81,10 +85,20 @@ def verify_token(token: str):
 def cors_headers():
     return {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, X-Authorization, Authorization',
         'Access-Control-Max-Age': '86400',
     }
+
+
+def get_user_id(event: dict):
+    headers = event.get('headers', {}) or {}
+    auth_header = headers.get('X-Authorization') or headers.get('x-authorization', '')
+    token = auth_header.replace('Bearer ', '').strip()
+    payload = verify_token(token)
+    if not payload:
+        return None
+    return int(payload['user_id'])
 
 
 def handler(event: dict, context) -> dict:
@@ -108,15 +122,111 @@ def handler(event: dict, context) -> dict:
             payload = verify_token(token)
             if not payload:
                 return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Не авторизован'})}
-            cur.execute(f"SELECT id, email, name, created_at FROM users WHERE id = {int(payload['user_id'])}")
+            cur.execute(
+                f"""SELECT id, email, name, created_at, email_notifications_enabled, referral_code
+                    FROM users WHERE id = {int(payload['user_id'])}"""
+            )
             row = cur.fetchone()
             if not row:
                 return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'Пользователь не найден'})}
             return {
                 'statusCode': 200,
                 'headers': headers,
-                'body': json.dumps({'id': row[0], 'email': row[1], 'name': row[2], 'created_at': str(row[3])}),
+                'body': json.dumps({
+                    'id': row[0], 'email': row[1], 'name': row[2], 'created_at': str(row[3]),
+                    'email_notifications_enabled': row[4], 'referral_code': row[5],
+                }),
             }
+
+        if method == 'GET' and action == 'referrals':
+            user_id = get_user_id(event)
+            if user_id is None:
+                return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Не авторизован'})}
+
+            cur.execute(f"SELECT referral_code FROM users WHERE id = {user_id}")
+            code_row = cur.fetchone()
+            referral_code = code_row[0] if code_row else None
+
+            cur.execute(
+                f"""
+                SELECT u.email, u.name, u.created_at,
+                    EXISTS(SELECT 1 FROM payments p WHERE p.user_id = u.id AND p.status = 'succeeded')
+                FROM users u WHERE u.referred_by = {user_id}
+                ORDER BY u.created_at DESC
+                """
+            )
+            invited = [
+                {'email': r[0], 'name': r[1], 'created_at': str(r[2]), 'has_paid': r[3]}
+                for r in cur.fetchall()
+            ]
+
+            cur.execute(
+                f"""
+                SELECT COALESCE(SUM(bonus_days), 0), COUNT(*)
+                FROM referral_bonuses WHERE referrer_id = {user_id}
+                """
+            )
+            bonus_row = cur.fetchone()
+
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps({
+                    'referral_code': referral_code,
+                    'invited': invited,
+                    'total_bonus_days': bonus_row[0],
+                    'bonus_count': bonus_row[1],
+                }),
+            }
+
+        if method == 'PUT' and action == 'profile':
+            user_id = get_user_id(event)
+            if user_id is None:
+                return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Не авторизован'})}
+
+            body = json.loads(event.get('body') or '{}')
+            name = body.get('name')
+            new_password = body.get('new_password')
+            current_password = body.get('current_password')
+
+            updates = []
+            if name is not None:
+                updates.append(f"name = '{escape(name.strip())}'")
+
+            if new_password:
+                if len(new_password) < 6:
+                    return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Пароль должен быть не короче 6 символов'})}
+                cur.execute(f"SELECT password_hash FROM users WHERE id = {user_id}")
+                row = cur.fetchone()
+                if not row or not verify_password(current_password or '', row[0]):
+                    return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Неверный текущий пароль'})}
+                updates.append(f"password_hash = '{escape(hash_password(new_password))}'")
+
+            if not updates:
+                return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Нечего обновлять'})}
+
+            cur.execute(f"UPDATE users SET {', '.join(updates)} WHERE id = {user_id} RETURNING id, email, name")
+            row = cur.fetchone()
+            conn.commit()
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps({'id': row[0], 'email': row[1], 'name': row[2]}),
+            }
+
+        if method == 'PUT' and action == 'notifications':
+            user_id = get_user_id(event)
+            if user_id is None:
+                return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Не авторизован'})}
+
+            body = json.loads(event.get('body') or '{}')
+            enabled = bool(body.get('email_notifications_enabled', True))
+            cur.execute(
+                f"UPDATE users SET email_notifications_enabled = {enabled} WHERE id = {user_id} RETURNING email_notifications_enabled"
+            )
+            row = cur.fetchone()
+            conn.commit()
+            return {'statusCode': 200, 'headers': headers, 'body': json.dumps({'email_notifications_enabled': row[0]})}
 
         if method != 'POST':
             return {'statusCode': 405, 'headers': headers, 'body': json.dumps({'error': 'Метод не поддерживается'})}
@@ -128,6 +238,7 @@ def handler(event: dict, context) -> dict:
             email = (body.get('email') or '').strip().lower()
             password = body.get('password') or ''
             name = (body.get('name') or '').strip()
+            referral_code_input = (body.get('referral_code') or '').strip().upper()
 
             if not EMAIL_RE.match(email):
                 return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Некорректный email'})}
@@ -138,6 +249,13 @@ def handler(event: dict, context) -> dict:
             existing = cur.fetchone()
             if existing and existing[1]:
                 return {'statusCode': 409, 'headers': headers, 'body': json.dumps({'error': 'Пользователь с таким email уже существует'})}
+
+            referred_by = None
+            if referral_code_input:
+                cur.execute(f"SELECT id FROM users WHERE referral_code = '{escape(referral_code_input)}'")
+                ref_row = cur.fetchone()
+                if ref_row:
+                    referred_by = ref_row[0]
 
             password_hash = hash_password(password)
             code = generate_code()
@@ -153,10 +271,12 @@ def handler(event: dict, context) -> dict:
                     """
                 )
             else:
+                new_referral_code = generate_referral_code()
+                referred_by_sql = str(referred_by) if referred_by else 'NULL'
                 cur.execute(
                     f"""
-                    INSERT INTO users (email, password_hash, name, verification_code, verification_code_expires)
-                    VALUES ('{escape(email)}', '{escape(password_hash)}', '{escape(name)}', '{code}', '{expires.isoformat()}')
+                    INSERT INTO users (email, password_hash, name, verification_code, verification_code_expires, referral_code, referred_by)
+                    VALUES ('{escape(email)}', '{escape(password_hash)}', '{escape(name)}', '{code}', '{expires.isoformat()}', '{new_referral_code}', {referred_by_sql})
                     RETURNING id, email
                     """
                 )

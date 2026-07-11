@@ -171,9 +171,9 @@ def handler(event: dict, context) -> dict:
 
             if status in ('ready', 'failed'):
                 _build_id, app_name, owner_id = row
-                cur.execute(f"SELECT email FROM users WHERE id = {int(owner_id)}")
+                cur.execute(f"SELECT email, email_notifications_enabled FROM users WHERE id = {int(owner_id)}")
                 user_row = cur.fetchone()
-                if user_row and user_row[0]:
+                if user_row and user_row[0] and user_row[1]:
                     dashboard_url = f"{FRONTEND_URL}/dashboard"
                     try:
                         if status == 'ready':

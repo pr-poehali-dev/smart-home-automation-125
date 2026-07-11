@@ -273,28 +273,28 @@ export default function Dashboard() {
                 Мои приложения
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => toast({ title: "Скоро будет доступно" })}
+                onClick={() => navigate("/profile")}
                 className="text-gray-300 focus:bg-red-500/10 focus:text-white cursor-pointer"
               >
                 <Icon name="User" size={16} className="mr-2" />
                 Мой профиль
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => toast({ title: "Скоро будет доступно" })}
+                onClick={() => navigate("/notifications")}
                 className="text-gray-300 focus:bg-red-500/10 focus:text-white cursor-pointer"
               >
                 <Icon name="Bell" size={16} className="mr-2" />
                 Уведомления
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => toast({ title: "Скоро будет доступно" })}
+                onClick={() => navigate("/billing")}
                 className="text-gray-300 focus:bg-red-500/10 focus:text-white cursor-pointer"
               >
                 <Icon name="FileText" size={16} className="mr-2" />
                 Платежные данные
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => toast({ title: "Скоро будет доступно" })}
+                onClick={() => navigate("/referrals")}
                 className="text-gray-300 focus:bg-red-500/10 focus:text-white cursor-pointer"
               >
                 <Icon name="Gift" size={16} className="mr-2" />

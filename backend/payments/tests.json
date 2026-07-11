@@ -31,6 +31,12 @@
       "path": "/?action=webhook",
       "body": {},
       "expectedStatus": 400
+    },
+    {
+      "name": "GET history без токена",
+      "method": "GET",
+      "path": "/?action=history",
+      "expectedStatus": 401
     }
   ]
 }

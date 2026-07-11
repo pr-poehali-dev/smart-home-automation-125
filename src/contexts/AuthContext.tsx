@@ -5,16 +5,19 @@ interface User {
   id: number
   email: string
   name: string | null
+  email_notifications_enabled?: boolean
+  referral_code?: string
 }
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, name: string) => Promise<void>
+  register: (email: string, password: string, name: string, referralCode?: string) => Promise<void>
   verifyCode: (email: string, code: string) => Promise<void>
   resendCode: (email: string) => Promise<void>
   logout: () => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -66,11 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user)
   }
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string, name: string, referralCode?: string) => {
     const res = await fetch(AUTH_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "register", email, password, name }),
+      body: JSON.stringify({ action: "register", email, password, name, referral_code: referralCode }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error || "Не удалось зарегистрироваться")
@@ -103,8 +106,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
+  const refreshUser = async () => {
+    await fetchMe()
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, verifyCode, resendCode, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, verifyCode, resendCode, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

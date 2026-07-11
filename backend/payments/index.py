@@ -16,6 +16,7 @@ YOOKASSA_SECRET_KEY = os.environ.get('YOOKASSA_SECRET_KEY', '')
 YOOKASSA_API_URL = 'https://api.yookassa.ru/v3/payments'
 
 PLAN_DAYS = 30
+REFERRAL_BONUS_DAYS = 7
 
 
 def escape(value: str) -> str:
@@ -120,18 +121,52 @@ def handler(event: dict, context) -> dict:
                     f"""
                     UPDATE payments SET status = 'succeeded', paid_at = NOW()
                     WHERE yookassa_payment_id = '{escape(yookassa_payment_id)}'
-                    RETURNING user_id, plan_code
+                    RETURNING id, user_id, plan_code
                     """
                 )
                 row = cur.fetchone()
                 if row:
-                    user_id, plan_code = row
+                    payment_id, user_id, plan_code = row
                     cur.execute(
                         f"""
                         INSERT INTO subscriptions (user_id, plan_code, status, expires_at)
                         VALUES ({user_id}, '{escape(plan_code)}', 'active', NOW() + INTERVAL '{PLAN_DAYS} days')
                         """
                     )
+
+                    cur.execute(
+                        f"""
+                        SELECT referred_by FROM users
+                        WHERE id = {user_id} AND referred_by IS NOT NULL
+                        """
+                    )
+                    ref_row = cur.fetchone()
+                    if ref_row:
+                        referrer_id = ref_row[0]
+                        cur.execute(
+                            f"""
+                            SELECT COUNT(*) FROM payments
+                            WHERE user_id = {user_id} AND status = 'succeeded'
+                            """
+                        )
+                        paid_count = cur.fetchone()[0]
+                        if paid_count == 1:
+                            cur.execute(
+                                f"""
+                                INSERT INTO referral_bonuses (referrer_id, referred_id, payment_id, bonus_days)
+                                VALUES ({referrer_id}, {user_id}, {payment_id}, {REFERRAL_BONUS_DAYS})
+                                """
+                            )
+                            cur.execute(
+                                f"""
+                                UPDATE subscriptions SET expires_at = expires_at + INTERVAL '{REFERRAL_BONUS_DAYS} days'
+                                WHERE id = (
+                                    SELECT id FROM subscriptions
+                                    WHERE user_id = {referrer_id} AND status = 'active' AND expires_at > NOW()
+                                    ORDER BY expires_at DESC LIMIT 1
+                                )
+                                """
+                            )
                 conn.commit()
             elif event_type == 'payment.canceled':
                 cur.execute(
@@ -144,6 +179,26 @@ def handler(event: dict, context) -> dict:
         user_id = get_user_id(event)
         if user_id is None:
             return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Не авторизован'})}
+
+        if method == 'GET' and action == 'history':
+            cur.execute(
+                f"""
+                SELECT p.id, p.plan_code, pl.name, p.amount, p.status, p.created_at, p.paid_at
+                FROM payments p
+                JOIN plans pl ON pl.code = p.plan_code
+                WHERE p.user_id = {user_id}
+                ORDER BY p.created_at DESC
+                """
+            )
+            rows = cur.fetchall()
+            history = [
+                {
+                    'id': r[0], 'plan_code': r[1], 'plan_name': r[2], 'amount': r[3],
+                    'status': r[4], 'created_at': str(r[5]), 'paid_at': str(r[6]) if r[6] else None,
+                }
+                for r in rows
+            ]
+            return {'statusCode': 200, 'headers': headers, 'body': json.dumps(history)}
 
         if method == 'GET' and action == 'plans':
             cur.execute("SELECT code, name, price, builds_limit, description FROM plans ORDER BY sort_order")
