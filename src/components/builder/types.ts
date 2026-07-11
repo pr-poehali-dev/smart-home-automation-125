@@ -157,6 +157,7 @@ export type SectionId =
   | "settings"
   | "links"
   | "overrides"
+  | "documentation"
   | `addon-${string}`
 
 export interface NavItem {
@@ -172,6 +173,7 @@ export const mainSections: NavItem[] = [
   { id: "settings", label: "Настройки приложения", icon: "Settings" },
   { id: "links", label: "Обработка ссылок", icon: "Link2" },
   { id: "overrides", label: "Переопределения веб-сайта", icon: "MonitorSmartphone" },
+  { id: "documentation", label: "Документация", icon: "BookOpen" },
 ]
 
 export interface AddonItem {

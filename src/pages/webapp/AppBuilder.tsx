@@ -14,6 +14,7 @@ import PermissionsSection from "@/components/builder/sections/PermissionsSection
 import SettingsSection from "@/components/builder/sections/SettingsSection"
 import LinksSection from "@/components/builder/sections/LinksSection"
 import OverridesSection from "@/components/builder/sections/OverridesSection"
+import DocumentationSection from "@/components/builder/sections/DocumentationSection"
 import UiSection from "@/components/builder/sections/UiSection"
 import MonetizationSection from "@/components/builder/sections/MonetizationSection"
 import NotificationsSection from "@/components/builder/sections/NotificationsSection"
@@ -170,7 +171,8 @@ export default function AppBuilder() {
     if (active === "permissions") return <PermissionsSection state={state} update={update} />
     if (active === "settings") return <SettingsSection state={state} update={update} />
     if (active === "links") return <LinksSection state={state} update={update} />
-    if (active === "overrides") return <OverridesSection state={state} update={update} />
+    if (active === "overrides") return <OverridesSection state={state} update={update} onNavigate={setActive} />
+    if (active === "documentation") return <DocumentationSection />
     if (active === "addon-ui") return <UiSection state={state} update={update} />
     if (active === "addon-monetization") return <MonetizationSection state={state} update={update} />
     if (active === "addon-notifications") return <NotificationsSection state={state} update={update} />
