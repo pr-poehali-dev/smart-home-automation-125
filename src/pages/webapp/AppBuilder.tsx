@@ -38,9 +38,15 @@ export default function AppBuilder() {
   const { toast } = useToast()
 
   const [active, setActive] = useState<SectionId>("info")
+  const [docsTopic, setDocsTopic] = useState<string | undefined>(undefined)
   const [state, setState] = useState<BuilderState>(defaultBuilderState)
   const [isSaving, setIsSaving] = useState(false)
   const [isLoadingBuild, setIsLoadingBuild] = useState(!!buildId)
+
+  const goToDocs = (topic?: string) => {
+    setDocsTopic(topic)
+    setActive("documentation")
+  }
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth")
@@ -170,9 +176,9 @@ export default function AppBuilder() {
     if (active === "splash") return <SplashSection state={state} update={update} />
     if (active === "permissions") return <PermissionsSection state={state} update={update} />
     if (active === "settings") return <SettingsSection state={state} update={update} />
-    if (active === "links") return <LinksSection state={state} update={update} />
-    if (active === "overrides") return <OverridesSection state={state} update={update} onNavigate={setActive} />
-    if (active === "documentation") return <DocumentationSection />
+    if (active === "links") return <LinksSection state={state} update={update} onNavigateDocs={goToDocs} />
+    if (active === "overrides") return <OverridesSection state={state} update={update} onNavigate={() => goToDocs()} />
+    if (active === "documentation") return <DocumentationSection initialTopic={docsTopic} />
     if (active === "addon-ui") return <UiSection state={state} update={update} />
     if (active === "addon-monetization") return <MonetizationSection state={state} update={update} />
     if (active === "addon-notifications") return <NotificationsSection state={state} update={update} />

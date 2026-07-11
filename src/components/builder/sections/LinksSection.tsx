@@ -3,13 +3,13 @@ import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import Icon from "@/components/ui/icon"
 import { BuilderState } from "../types"
+import { topicIds } from "./DocumentationSection"
 
 interface Props {
   state: BuilderState
   update: <K extends keyof BuilderState>(key: K, value: BuilderState[K]) => void
+  onNavigateDocs?: (topic?: string) => void
 }
-
-const docsUrl = "https://docs.poehali.dev/getting-started/prompting"
 
 const toggleCards = [
   {
@@ -17,42 +17,45 @@ const toggleCards = [
     title: "Внутренние против внешних",
     desc: "Настройте правила, чтобы контролировать, какие ссылки открываются внутри вашего приложения, а какие — в браузере по умолчанию на устройстве.",
     key: "internalExternalLinks" as const,
+    docTopic: topicIds.internalExternalLinks,
   },
   {
     icon: "Link2",
     title: "Глубокие ссылки",
     desc: "Открывайте ссылки, ведущие на ваш сайт, непосредственно в вашем приложении, а не в браузере.",
     key: "deepLinks" as const,
+    docTopic: topicIds.deepLinks,
   },
   {
     icon: "FileText",
     title: "Установить referer",
     desc: "Отслеживайте источники установки вашего приложения и перенаправляйте пользователей на определённую страницу после первого открытия рекламной ссылки.",
     key: "setReferrer" as const,
+    docTopic: topicIds.setReferrer,
   },
   {
     icon: "ShieldCheck",
     title: "Пароль / Веб-аутентификация",
     desc: "Включите встроенную аутентификацию по паролю или WebAuthn, чтобы пользователи вашего приложения могли входить в систему с помощью биометрических данных, ключей безопасности или сохранённых учётных данных.",
     key: "webAuth" as const,
+    docTopic: topicIds.webAuth,
   },
 ]
 
-function DocsLink() {
+function DocsLink({ onClick }: { onClick?: () => void }) {
   return (
-    <a
-      href={docsUrl}
-      target="_blank"
-      rel="noopener noreferrer"
+    <button
+      type="button"
+      onClick={onClick}
       className="text-xs text-red-400 flex items-center gap-1 hover:text-red-300"
     >
-      Просмотреть документы
-      <Icon name="ExternalLink" size={11} />
-    </a>
+      Просмотреть документацию
+      <Icon name="BookOpen" size={11} />
+    </button>
   )
 }
 
-export default function LinksSection({ state, update }: Props) {
+export default function LinksSection({ state, update, onNavigateDocs }: Props) {
   return (
     <div className="space-y-4 max-w-5xl">
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -61,7 +64,7 @@ export default function LinksSection({ state, update }: Props) {
             <CardContent className="pt-5 flex flex-col flex-1">
               <div className="flex items-center justify-between mb-3">
                 <Icon name={c.icon} size={20} className="text-gray-400" />
-                <DocsLink />
+                <DocsLink onClick={() => onNavigateDocs?.(c.docTopic)} />
               </div>
               <p className="text-white text-sm font-medium mb-1.5">{c.title}</p>
               <p className="text-gray-500 text-xs flex-1">{c.desc}</p>
@@ -77,7 +80,7 @@ export default function LinksSection({ state, update }: Props) {
           <CardContent className="pt-5 flex flex-col flex-1">
             <div className="flex items-center justify-between mb-3">
               <Icon name="Waypoints" size={20} className="text-gray-400" />
-              <DocsLink />
+              <DocsLink onClick={() => onNavigateDocs?.(topicIds.urlScheme)} />
             </div>
             <p className="text-white text-sm font-medium mb-1.5">Протокол схемы URL</p>
             <p className="text-gray-500 text-xs flex-1">
@@ -96,7 +99,7 @@ export default function LinksSection({ state, update }: Props) {
           <CardContent className="pt-5 flex flex-col flex-1">
             <div className="flex items-center justify-between mb-3">
               <Icon name="Globe2" size={20} className="text-gray-400" />
-              <DocsLink />
+              <DocsLink onClick={() => onNavigateDocs?.(topicIds.allowHttp)} />
             </div>
             <p className="text-white text-sm font-medium mb-1.5">Разрешить HTTP (небезопасный контент)</p>
             <p className="text-gray-500 text-xs flex-1">
