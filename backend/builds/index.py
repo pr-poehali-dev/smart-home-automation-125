@@ -92,7 +92,7 @@ BUILD_COLUMNS = (
 )
 
 
-def send_to_build_server(build_id: int, site_url: str, app_name: str, package_name):
+def send_to_build_server(build_id: int, site_url: str, app_name: str, package_name, options: dict):
     '''Отправляет заявку на внешний сервер сборки APK. Сервер сам присылает результат через callback позже'''
     if not APK_BUILD_SERVER_URL:
         raise RuntimeError('APK_BUILD_SERVER_URL не настроен')
@@ -103,6 +103,7 @@ def send_to_build_server(build_id: int, site_url: str, app_name: str, package_na
         'app_name': app_name,
         'package_name': package_name,
         'callback_url': f"{BUILDS_FUNCTION_URL}?action=callback" if BUILDS_FUNCTION_URL else None,
+        **options,
     }
 
     req = urllib.request.Request(
@@ -120,6 +121,31 @@ def send_to_build_server(build_id: int, site_url: str, app_name: str, package_na
 
 def sql_str(value):
     return 'NULL' if value is None else f"'{escape(str(value))}'"
+
+
+def build_options(
+    icon_url, splash_color, theme_color, push_enabled, offline_enabled,
+    push_provider, fcm_server_key, onesignal_app_id, onesignal_rest_api_key,
+    notification_icon_set, notification_icon_name, addon_ids, config,
+):
+    return {
+        'icon_url': icon_url,
+        'splash_color': splash_color,
+        'theme_color': theme_color,
+        'push_enabled': push_enabled,
+        'offline_enabled': offline_enabled,
+        'push_provider': push_provider,
+        'fcm_server_key': fcm_server_key,
+        'onesignal_app_id': onesignal_app_id,
+        'onesignal_rest_api_key': onesignal_rest_api_key,
+        'notification_icon_set': notification_icon_set,
+        'notification_icon_name': notification_icon_name,
+        'addon_ids': addon_ids,
+        'screenshot_disabled': bool((config or {}).get('screenshotDisabled', False)),
+        'app_lock_enabled': bool((config or {}).get('appLockEnabled', False)),
+        'web_auth_enabled': bool((config or {}).get('webAuth', False)),
+        'config': config,
+    }
 
 
 def handler(event: dict, context) -> dict:
@@ -297,7 +323,12 @@ def handler(event: dict, context) -> dict:
             build = row_to_build(row)
 
             try:
-                send_to_build_server(build['id'], site_url, app_name, package_name)
+                options = build_options(
+                    icon_url, splash_color, theme_color, push_enabled, offline_enabled,
+                    push_provider, fcm_server_key, onesignal_app_id, onesignal_rest_api_key,
+                    notification_icon_set, notification_icon_name, addon_ids, config,
+                )
+                send_to_build_server(build['id'], site_url, app_name, package_name, options)
                 cur.execute(
                     f"UPDATE builds SET status = 'building', updated_at = NOW() WHERE id = {build['id']}"
                 )
@@ -379,7 +410,12 @@ def handler(event: dict, context) -> dict:
             build = row_to_build(row)
 
             try:
-                send_to_build_server(build['id'], site_url, app_name, package_name)
+                options = build_options(
+                    icon_url, splash_color, theme_color, push_enabled, offline_enabled,
+                    push_provider, fcm_server_key, onesignal_app_id, onesignal_rest_api_key,
+                    notification_icon_set, notification_icon_name, addon_ids, config,
+                )
+                send_to_build_server(build['id'], site_url, app_name, package_name, options)
                 cur.execute(
                     f"UPDATE builds SET status = 'building', updated_at = NOW() WHERE id = {build['id']}"
                 )
