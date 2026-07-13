@@ -43,15 +43,15 @@ export default function PermissionsSection({ state, update }: Props) {
           </SettingRow>
 
           <SettingRow
-            title="API-интерфейсы сервисов Play Store"
-            description="Включите API сервисов Google Play Store, например, для проверки возраста."
+            title="Разрешение на доступ к микрофону"
+            description="Позволяет приложению записывать звук с микрофона устройства (например, для голосового ввода или звонков)."
             badge={
               <Badge className="bg-red-500/20 text-red-400 border-0 text-[10px] px-1.5 py-0">
                 Новое
               </Badge>
             }
           >
-            <Switch checked={state.permPlayStoreApi} onCheckedChange={(v) => update("permPlayStoreApi", v)} />
+            <Switch checked={state.permMicrophone} onCheckedChange={(v) => update("permMicrophone", v)} />
           </SettingRow>
         </CardContent>
       </Card>

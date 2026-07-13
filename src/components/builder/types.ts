@@ -17,7 +17,7 @@ export interface BuilderState {
   permLocation: boolean
   permMedia: boolean
   permVibration: boolean
-  permPlayStoreApi: boolean
+  permMicrophone: boolean
 
   statusBarColor: string
   orientation: "portrait" | "landscape" | "both"
@@ -93,7 +93,7 @@ export const defaultBuilderState: BuilderState = {
   permLocation: false,
   permMedia: false,
   permVibration: false,
-  permPlayStoreApi: false,
+  permMicrophone: false,
 
   statusBarColor: "#FFFFFF",
   orientation: "portrait",
@@ -157,6 +157,7 @@ export type SectionId =
   | "settings"
   | "links"
   | "overrides"
+  | "preview"
   | "documentation"
   | `addon-${string}`
 

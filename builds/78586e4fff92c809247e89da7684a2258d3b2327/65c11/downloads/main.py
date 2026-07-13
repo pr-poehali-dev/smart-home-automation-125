@@ -155,7 +155,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     perm_location = cfg_bool("permLocation")
     perm_media = cfg_bool("permMedia")
     perm_vibration = cfg_bool("permVibration")
-    perm_microphone = cfg_bool("permMicrophone")
     pinch_zoom = cfg_bool("pinchZoom")
     allow_http = cfg_bool("allowHttp")
     disable_cache = cfg_bool("disableCache")
@@ -254,8 +253,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
         permissions += ["android.permission.READ_EXTERNAL_STORAGE"]
     if perm_vibration:
         permissions.append("android.permission.VIBRATE")
-    if perm_microphone:
-        permissions.append("android.permission.RECORD_AUDIO")
     if push_enabled:
         permissions.append("android.permission.POST_NOTIFICATIONS")
     permissions = sorted(set(permissions))
@@ -269,8 +266,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
         manifest.append(f'    <uses-permission android:name="{p}" />')
     if perm_camera:
         manifest.append('    <uses-feature android:name="android.hardware.camera" android:required="false" />')
-    if perm_microphone:
-        manifest.append('    <uses-feature android:name="android.hardware.microphone" android:required="false" />')
 
     app_attrs = [
         'android:allowBackup="true"',
@@ -486,23 +481,7 @@ public class MainActivity extends Activity {{
 
             @Override
             public void onPermissionRequest(final PermissionRequest request) {{
-                runOnUiThread(() -> {{
-                    java.util.List<String> allowed = new java.util.ArrayList<>();
-                    for (String resource : request.getResources()) {{
-                        if (resource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE) && {str(perm_microphone).lower()}) {{
-                            allowed.add(resource);
-                        }} else if (resource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE) && {str(perm_camera).lower()}) {{
-                            allowed.add(resource);
-                        }} else if (!resource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE) && !resource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {{
-                            allowed.add(resource);
-                        }}
-                    }}
-                    if (!allowed.isEmpty()) {{
-                        request.grant(allowed.toArray(new String[0]));
-                    }} else {{
-                        request.deny();
-                    }}
-                }});
+                runOnUiThread(() -> request.grant(request.getResources()));
             }}
 
             @Override
@@ -523,7 +502,7 @@ public class MainActivity extends Activity {{
         }});
 
         {{}}
-        if ({str(perm_camera).lower()} || {str(perm_location).lower()} || {str(perm_media).lower()} || {str(perm_microphone).lower()}) {{
+        if ({str(perm_camera).lower()} || {str(perm_location).lower()} || {str(perm_media).lower()}) {{
             requestRuntimePermissions();
         }}
 
@@ -544,7 +523,6 @@ public class MainActivity extends Activity {{
             perms.add(Manifest.permission.ACCESS_COARSE_LOCATION);
         }}
         if ({str(perm_media).lower()}) perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-        if ({str(perm_microphone).lower()}) perms.add(Manifest.permission.RECORD_AUDIO);
         if (!perms.isEmpty()) {{
             ActivityCompat.requestPermissions(this, perms.toArray(new String[0]), 1001);
         }}

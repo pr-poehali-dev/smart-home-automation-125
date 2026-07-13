@@ -14,6 +14,7 @@ import PermissionsSection from "@/components/builder/sections/PermissionsSection
 import SettingsSection from "@/components/builder/sections/SettingsSection"
 import LinksSection from "@/components/builder/sections/LinksSection"
 import OverridesSection from "@/components/builder/sections/OverridesSection"
+import PreviewSection from "@/components/builder/sections/PreviewSection"
 import DocumentationSection from "@/components/builder/sections/DocumentationSection"
 import UiSection from "@/components/builder/sections/UiSection"
 import MonetizationSection from "@/components/builder/sections/MonetizationSection"
@@ -103,9 +104,11 @@ export default function AppBuilder() {
   const sectionLabel =
     active === "addon-marketplace"
       ? "Информация о приложении"
-      : mainSections.find((s) => s.id === active)?.label ||
-        addonSections.find((s) => `addon-${s.id}` === active)?.label ||
-        "Информация о приложении"
+      : active === "preview"
+        ? "Предварительный просмотр"
+        : mainSections.find((s) => s.id === active)?.label ||
+          addonSections.find((s) => `addon-${s.id}` === active)?.label ||
+          "Информация о приложении"
 
   const handleBuild = async () => {
     if (!state.siteUrl || !state.appName) {
@@ -178,6 +181,7 @@ export default function AppBuilder() {
     if (active === "settings") return <SettingsSection state={state} update={update} />
     if (active === "links") return <LinksSection state={state} update={update} onNavigateDocs={goToDocs} />
     if (active === "overrides") return <OverridesSection state={state} update={update} onNavigate={() => goToDocs()} />
+    if (active === "preview") return <PreviewSection state={state} />
     if (active === "documentation") return <DocumentationSection initialTopic={docsTopic} />
     if (active === "addon-ui") return <UiSection state={state} update={update} />
     if (active === "addon-monetization") return <MonetizationSection state={state} update={update} />

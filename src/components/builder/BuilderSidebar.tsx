@@ -107,6 +107,20 @@ export default function BuilderSidebar({ active, onSelect }: Props) {
                   <Icon name="ChevronRight" size={14} className="text-gray-600" />
                 </button>
               ))}
+
+              {"предварительный просмотр".includes(search.toLowerCase()) && (
+                <button
+                  onClick={() => onSelect("preview")}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors text-left ${
+                    active === "preview"
+                      ? "bg-red-500/10 text-red-400"
+                      : "text-gray-300 hover:bg-neutral-900 hover:text-white"
+                  }`}
+                >
+                  <Icon name="MonitorPlay" size={17} />
+                  <span className="flex-1">Предварительный просмотр</span>
+                </button>
+              )}
             </div>
           )}
         </div>
