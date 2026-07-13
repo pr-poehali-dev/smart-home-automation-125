@@ -70,61 +70,30 @@ def color_or(value: Optional[str], default: str) -> str:
     return default
 
 
-DEFAULT_ICON_B64 = (
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
-)
-
-MIPMAP_SIZES = {
-    "mipmap-mdpi": 48,
-    "mipmap-hdpi": 72,
-    "mipmap-xhdpi": 96,
-    "mipmap-xxhdpi": 144,
-    "mipmap-xxxhdpi": 192,
-}
-
-
-def write_default_icon(res_dir: str):
-    import base64
-
-    data = base64.b64decode(DEFAULT_ICON_B64)
-    for folder in MIPMAP_SIZES:
-        out_dir = os.path.join(res_dir, folder)
-        os.makedirs(out_dir, exist_ok=True)
-        with open(os.path.join(out_dir, "ic_launcher.png"), "wb") as f:
-            f.write(data)
-        with open(os.path.join(out_dir, "ic_launcher_round.png"), "wb") as f:
-            f.write(data)
-
-
 def download_icon(icon_url: str, res_dir: str) -> bool:
     try:
+        from PIL import Image
+        import io
+
         req = urllib.request.Request(icon_url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=20) as resp:
             data = resp.read()
-        if not data:
-            return False
+        img = Image.open(io.BytesIO(data)).convert("RGBA")
 
-        try:
-            from PIL import Image
-            import io
-
-            img = Image.open(io.BytesIO(data)).convert("RGBA")
-            for folder, size in MIPMAP_SIZES.items():
-                out_dir = os.path.join(res_dir, folder)
-                os.makedirs(out_dir, exist_ok=True)
-                resized = img.resize((size, size), Image.LANCZOS)
-                resized.save(os.path.join(out_dir, "ic_launcher.png"))
-                resized.save(os.path.join(out_dir, "ic_launcher_round.png"))
-            return True
-        except ImportError:
-            for folder in MIPMAP_SIZES:
-                out_dir = os.path.join(res_dir, folder)
-                os.makedirs(out_dir, exist_ok=True)
-                with open(os.path.join(out_dir, "ic_launcher.png"), "wb") as f:
-                    f.write(data)
-                with open(os.path.join(out_dir, "ic_launcher_round.png"), "wb") as f:
-                    f.write(data)
-            return True
+        sizes = {
+            "mipmap-mdpi": 48,
+            "mipmap-hdpi": 72,
+            "mipmap-xhdpi": 96,
+            "mipmap-xxhdpi": 144,
+            "mipmap-xxxhdpi": 192,
+        }
+        for folder, size in sizes.items():
+            out_dir = os.path.join(res_dir, folder)
+            os.makedirs(out_dir, exist_ok=True)
+            resized = img.resize((size, size), Image.LANCZOS)
+            resized.save(os.path.join(out_dir, "ic_launcher.png"))
+            resized.save(os.path.join(out_dir, "ic_launcher_round.png"))
+        return True
     except Exception:
         return False
 
@@ -348,7 +317,11 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     if req.icon_url:
         icon_ok = download_icon(req.icon_url, res_dir)
     if not icon_ok:
-        write_default_icon(res_dir)
+        for folder, size in {
+            "mipmap-mdpi": 48, "mipmap-hdpi": 72, "mipmap-xhdpi": 96,
+            "mipmap-xxhdpi": 144, "mipmap-xxxhdpi": 192,
+        }.items():
+            os.makedirs(os.path.join(res_dir, folder), exist_ok=True)
 
     if offline_enabled:
         with open(os.path.join(assets_dir, "offline.html"), "w") as f:
