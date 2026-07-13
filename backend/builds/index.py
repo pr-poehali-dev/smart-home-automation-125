@@ -275,23 +275,11 @@ def handler(event: dict, context) -> dict:
 
             apk_url, app_name = row
 
-            try:
-                req = urllib.request.Request(apk_url)
-                with urllib.request.urlopen(req, timeout=25) as resp:
-                    file_bytes = resp.read()
-            except Exception as e:
-                return {'statusCode': 502, 'headers': headers, 'body': json.dumps({'error': f'Не удалось получить APK с сервера сборки: {e}'})}
-
             safe_name = ''.join(c for c in (app_name or 'app') if c.isalnum() or c in (' ', '-', '_')).strip() or 'app'
             return {
                 'statusCode': 200,
-                'headers': {
-                    **cors_headers(),
-                    'Content-Type': 'application/vnd.android.package-archive',
-                    'Content-Disposition': f'attachment; filename="{safe_name}.apk"',
-                },
-                'body': base64.b64encode(file_bytes).decode(),
-                'isBase64Encoded': True,
+                'headers': headers,
+                'body': json.dumps({'url': apk_url, 'filename': f'{safe_name}.apk'}),
             }
 
         if method == 'GET':

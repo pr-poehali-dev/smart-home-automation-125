@@ -42,15 +42,15 @@ export default function BuildsList({ builds, isLoadingBuilds, isRefreshing, load
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error || "Не удалось скачать APK")
       }
-      const blob = await res.blob()
-      const url = window.URL.createObjectURL(blob)
+      const data = await res.json()
       const a = document.createElement("a")
-      a.href = url
-      a.download = `${appName || "app"}.apk`
+      a.href = data.url
+      a.download = data.filename || `${appName || "app"}.apk`
+      a.target = "_blank"
+      a.rel = "noopener"
       document.body.appendChild(a)
       a.click()
       a.remove()
-      window.URL.revokeObjectURL(url)
     } catch (err) {
       toast({ title: "Ошибка", description: err instanceof Error ? err.message : "Попробуйте снова", variant: "destructive" })
     } finally {
