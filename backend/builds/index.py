@@ -114,7 +114,8 @@ BUILD_COLUMNS = (
 
 
 def send_to_build_server(build_id: int, site_url: str, app_name: str, package_name, options: dict):
-    '''Отправляет заявку на внешний сервер сборки APK. Сервер сам присылает результат через callback позже'''
+    '''Отправляет заявку на внешний сервер сборки APK. Сервер сам присылает результат через callback позже.
+    Делает несколько попыток с паузой, т.к. сервер сборки может быть кратковременно недоступен.'''
     if not APK_BUILD_SERVER_URL:
         raise RuntimeError('APK_BUILD_SERVER_URL не настроен')
 
@@ -127,17 +128,25 @@ def send_to_build_server(build_id: int, site_url: str, app_name: str, package_na
         **options,
     }
 
-    req = urllib.request.Request(
-        f"{APK_BUILD_SERVER_URL}/build",
-        data=json.dumps(body).encode(),
-        headers={
-            'Content-Type': 'application/json',
-            'X-Build-Token': APK_BUILD_SERVER_TOKEN,
-        },
-        method='POST',
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return json.loads(resp.read().decode())
+    last_error = None
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(
+                f"{APK_BUILD_SERVER_URL}/build",
+                data=json.dumps(body).encode(),
+                headers={
+                    'Content-Type': 'application/json',
+                    'X-Build-Token': APK_BUILD_SERVER_TOKEN,
+                },
+                method='POST',
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                return json.loads(resp.read().decode())
+        except Exception as e:
+            last_error = e
+            if attempt < 2:
+                time.sleep(3 * (attempt + 1))
+    raise RuntimeError(f'Сервер сборки недоступен: {last_error}')
 
 
 def sql_str(value):
@@ -203,14 +212,28 @@ def handler(event: dict, context) -> dict:
                 return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Некорректные данные callback'})}
 
             if status == 'ready' and apk_url:
-                try:
-                    req = urllib.request.Request(apk_url)
-                    with urllib.request.urlopen(req, timeout=25) as resp:
-                        apk_bytes = resp.read()
-                    apk_url = upload_apk_to_s3(apk_bytes, int(build_id))
-                except Exception as e:
+                last_error = None
+                apk_bytes = None
+                for attempt in range(3):
+                    try:
+                        req = urllib.request.Request(apk_url, headers={'User-Agent': 'Mozilla/5.0'})
+                        with urllib.request.urlopen(req, timeout=25) as resp:
+                            apk_bytes = resp.read()
+                        break
+                    except Exception as e:
+                        last_error = e
+                        if attempt < 2:
+                            time.sleep(3 * (attempt + 1))
+                if apk_bytes:
+                    try:
+                        apk_url = upload_apk_to_s3(apk_bytes, int(build_id))
+                    except Exception as e:
+                        status = 'failed'
+                        error_message = f'Не удалось сохранить APK-файл в хранилище: {e}'
+                        apk_url = None
+                else:
                     status = 'failed'
-                    error_message = f'Не удалось сохранить APK-файл: {e}'
+                    error_message = f'Не удалось скачать APK с сервера сборки: {last_error}'
                     apk_url = None
 
             cur.execute(
@@ -246,6 +269,19 @@ def handler(event: dict, context) -> dict:
         user_id = get_user_id(event)
         if user_id is None:
             return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Не авторизован'})}
+
+        cur.execute(
+            f"""
+            UPDATE builds
+            SET status = 'failed',
+                error_message = 'Сервер сборки не ответил вовремя. Попробуйте собрать приложение ещё раз.',
+                updated_at = NOW()
+            WHERE user_id = {user_id} AND status IN ('queued', 'building')
+                AND updated_at < NOW() - INTERVAL '20 minutes'
+            """
+        )
+        if cur.rowcount:
+            conn.commit()
 
         if method == 'GET' and action == 'download':
             build_id = params.get('id')

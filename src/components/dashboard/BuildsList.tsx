@@ -22,6 +22,7 @@ export default function BuildsList({ builds, isLoadingBuilds, isRefreshing, load
 
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
+  const [retryingId, setRetryingId] = useState<number | null>(null)
 
   const handleDownloadBuild = async (id: number, appName: string) => {
     setDownloadingId(id)
@@ -55,6 +56,35 @@ export default function BuildsList({ builds, isLoadingBuilds, isRefreshing, load
       toast({ title: "Ошибка", description: err instanceof Error ? err.message : "Попробуйте снова", variant: "destructive" })
     } finally {
       setDownloadingId(null)
+    }
+  }
+
+  const handleRetryBuild = async (build: Build) => {
+    setRetryingId(build.id)
+    try {
+      const res = await fetch(`${BUILDS_URL}?id=${build.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({
+          site_url: build.site_url,
+          app_name: build.app_name,
+          package_name: build.package_name,
+          icon_url: build.icon_url,
+          splash_color: build.splash_color,
+          theme_color: build.theme_color,
+          push_enabled: build.push_enabled,
+          offline_enabled: build.offline_enabled,
+          addon_ids: build.addon_ids || [],
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Не удалось запустить пересборку")
+      setBuilds((prev) => prev.map((b) => (b.id === build.id ? { ...b, ...data } : b)))
+      toast({ title: "Сборка запущена заново", description: `«${build.app_name}» снова собирается` })
+    } catch (err) {
+      toast({ title: "Ошибка", description: err instanceof Error ? err.message : "Попробуйте снова", variant: "destructive" })
+    } finally {
+      setRetryingId(null)
     }
   }
 
@@ -158,6 +188,21 @@ export default function BuildsList({ builds, isLoadingBuilds, isRefreshing, load
                         <Icon name="Pencil" size={16} />
                       </Button>
                     </>
+                  )}
+                  {build.status === "failed" && (
+                    <Button
+                      size="sm"
+                      disabled={retryingId === build.id}
+                      onClick={() => handleRetryBuild(build)}
+                      className="bg-red-500 hover:bg-red-600 text-white border-0"
+                    >
+                      {retryingId === build.id ? (
+                        <Icon name="Loader2" size={16} className="animate-spin" />
+                      ) : (
+                        <Icon name="RotateCw" size={16} />
+                      )}
+                      Повторить
+                    </Button>
                   )}
                   <Button
                     size="sm"
