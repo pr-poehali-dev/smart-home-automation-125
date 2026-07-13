@@ -12,17 +12,6 @@ import re
 import shutil
 import signal
 import time
-import logging
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler("/var/log/buildapk.log"),
-        logging.StreamHandler(),
-    ],
-)
-logger = logging.getLogger("buildapk")
 
 app = FastAPI()
 
@@ -632,9 +621,7 @@ public class App extends Application {{
 
 def send_callback(callback_url: str, build_id: int, status: str, apk_url: Optional[str] = None, error: Optional[str] = None):
     if not callback_url:
-        logger.error(f"[build {build_id}] callback_url не задан, результат '{status}' некуда отправить")
         return
-    logger.info(f"[build {build_id}] отправляю callback: status={status}, error={(error or '')[:200]!r}")
     payload = json.dumps({
         "build_id": build_id,
         "status": status,
@@ -654,19 +641,15 @@ def send_callback(callback_url: str, build_id: int, status: str, apk_url: Option
             },
         )
         try:
-            with urllib.request.urlopen(req, timeout=20) as resp:
-                logger.info(f"[build {build_id}] callback доставлен, HTTP {resp.status}")
+            urllib.request.urlopen(req, timeout=20)
             return
-        except Exception as e:
-            logger.warning(f"[build {build_id}] попытка {attempt + 1}/5 отправки callback не удалась: {e}")
+        except Exception:
             if attempt < 4:
                 time.sleep(6 * (attempt + 1))
-    logger.error(f"[build {build_id}] callback НЕ доставлен после 5 попыток, результат '{status}' потерян")
 
 
 def run_build(req: BuildRequest, base_url: str):
     work_dir = os.path.join(BUILDS_DIR, str(req.build_id))
-    logger.info(f"[build {req.build_id}] старт сборки: app_name={req.app_name!r}, site_url={req.site_url!r}")
     with active_builds_lock:
         active_builds[req.build_id] = {"started_at": time.time(), "stage": "starting"}
     try:
@@ -675,9 +658,7 @@ def run_build(req: BuildRequest, base_url: str):
         os.makedirs(work_dir, exist_ok=True)
 
         pkg = sanitize_package(req.package_name, req.build_id)
-        logger.info(f"[build {req.build_id}] генерирую Android-проект (package={pkg})")
         generate_project(work_dir, pkg, req.app_name, req.site_url, req)
-        logger.info(f"[build {req.build_id}] проект сгенерирован, запускаю gradle assembleDebug")
 
         proc = subprocess.Popen(
             ["gradle", "assembleDebug", "--no-daemon"],
@@ -691,39 +672,28 @@ def run_build(req: BuildRequest, base_url: str):
         try:
             stdout, _ = proc.communicate(timeout=900)
             returncode = proc.returncode
-            logger.info(f"[build {req.build_id}] gradle завершился с кодом {returncode}")
         except subprocess.TimeoutExpired:
-            logger.error(f"[build {req.build_id}] превышено время сборки (15 минут), убиваю процесс gradle")
             _kill_process_group(proc)
             try:
                 stdout, _ = proc.communicate(timeout=10)
             except Exception:
                 stdout = ""
-            logger.error(f"[build {req.build_id}] последние строки лога gradle:\n{(stdout or '')[-1500:]}")
             send_callback(req.callback_url, req.build_id, "failed", error="Превышено время сборки (15 минут)")
             return
 
         if returncode != 0:
             error_log = (stdout or "")[-1500:]
-            logger.error(f"[build {req.build_id}] gradle упал с ошибкой:\n{error_log}")
             send_callback(req.callback_url, req.build_id, "failed", error=error_log)
             return
 
         built_apk = os.path.join(work_dir, "app", "build", "outputs", "apk", "debug", "app-debug.apk")
-        if not os.path.exists(built_apk):
-            logger.error(f"[build {req.build_id}] gradle вернул код 0, но APK-файл не найден по пути {built_apk}")
-            send_callback(req.callback_url, req.build_id, "failed", error=f"APK-файл не найден после сборки: {built_apk}")
-            return
-
         apk_name = f"app_{req.build_id}_{uuid.uuid4().hex[:8]}.apk"
         final_path = os.path.join(APKS_DIR, apk_name)
         shutil.copy(built_apk, final_path)
-        logger.info(f"[build {req.build_id}] APK скопирован в {final_path}")
 
         apk_url = f"{base_url}/download/{apk_name}"
         send_callback(req.callback_url, req.build_id, "ready", apk_url=apk_url)
     except Exception as e:
-        logger.exception(f"[build {req.build_id}] необработанная ошибка при сборке: {e}")
         send_callback(req.callback_url, req.build_id, "failed", error=str(e))
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)
@@ -748,10 +718,8 @@ def _kill_process_group(proc: subprocess.Popen):
 @app.post("/build")
 async def build_app(params: BuildRequest, x_build_token: str = Header(None)):
     if x_build_token != BUILD_TOKEN:
-        logger.warning(f"[build {params.build_id}] запрос отклонён: неверный токен")
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    logger.info(f"[build {params.build_id}] заявка принята, callback_url={params.callback_url!r}")
     base_url = "http://188.225.42.134:8000"
 
     thread = threading.Thread(
