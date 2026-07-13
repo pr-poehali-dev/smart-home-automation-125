@@ -47,6 +47,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return
+    const hasActiveBuilds = builds.some((b) => b.status === "building" || b.status === "queued")
+    if (!hasActiveBuilds) return
+    const interval = setInterval(() => loadBuilds(), 10000)
+    return () => clearInterval(interval)
+  }, [user, builds])
+
+  useEffect(() => {
+    if (!user) return
     fetch(`${PAYMENTS_URL}?action=subscription`, { headers: { ...authHeaders() } })
       .then(async (res) => {
         if (!res.ok) return

@@ -628,24 +628,19 @@ def send_callback(callback_url: str, build_id: int, status: str, apk_url: Option
         "apk_url": apk_url,
         "error": error,
     }).encode()
-    for attempt in range(5):
+    for attempt in range(3):
         req = urllib.request.Request(
             callback_url,
             data=payload,
             method="POST",
-            headers={
-                "Content-Type": "application/json",
-                "X-Build-Token": BUILD_TOKEN,
-                "User-Agent": "curl/8.5.0",
-                "Accept": "*/*",
-            },
+            headers={"Content-Type": "application/json", "X-Build-Token": BUILD_TOKEN},
         )
         try:
-            urllib.request.urlopen(req, timeout=20)
+            urllib.request.urlopen(req, timeout=15)
             return
         except Exception:
-            if attempt < 4:
-                time.sleep(6 * (attempt + 1))
+            if attempt < 2:
+                time.sleep(5 * (attempt + 1))
 
 
 def run_build(req: BuildRequest, base_url: str):
