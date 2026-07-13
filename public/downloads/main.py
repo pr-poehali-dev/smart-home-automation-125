@@ -10,6 +10,8 @@ import uuid
 import os
 import re
 import shutil
+import signal
+import time
 
 app = FastAPI()
 
@@ -19,6 +21,9 @@ BUILDS_DIR = "/tmp/builds"
 APKS_DIR = "/tmp/apks"
 os.makedirs(BUILDS_DIR, exist_ok=True)
 os.makedirs(APKS_DIR, exist_ok=True)
+
+active_builds: Dict[int, Dict[str, Any]] = {}
+active_builds_lock = threading.Lock()
 
 
 class BuildRequest(BaseModel):
@@ -637,6 +642,8 @@ def send_callback(callback_url: str, build_id: int, status: str, apk_url: Option
 
 def run_build(req: BuildRequest, base_url: str):
     work_dir = os.path.join(BUILDS_DIR, str(req.build_id))
+    with active_builds_lock:
+        active_builds[req.build_id] = {"started_at": time.time(), "stage": "starting"}
     try:
         if os.path.exists(work_dir):
             shutil.rmtree(work_dir)
@@ -645,16 +652,29 @@ def run_build(req: BuildRequest, base_url: str):
         pkg = sanitize_package(req.package_name, req.build_id)
         generate_project(work_dir, pkg, req.app_name, req.site_url, req)
 
-        result = subprocess.run(
+        proc = subprocess.Popen(
             ["gradle", "assembleDebug", "--no-daemon"],
             cwd=work_dir,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
-            timeout=900,
+            start_new_session=True,
         )
 
-        if result.returncode != 0:
-            error_log = (result.stderr or result.stdout)[-1500:]
+        try:
+            stdout, _ = proc.communicate(timeout=900)
+            returncode = proc.returncode
+        except subprocess.TimeoutExpired:
+            _kill_process_group(proc)
+            try:
+                stdout, _ = proc.communicate(timeout=10)
+            except Exception:
+                stdout = ""
+            send_callback(req.callback_url, req.build_id, "failed", error="Превышено время сборки (15 минут)")
+            return
+
+        if returncode != 0:
+            error_log = (stdout or "")[-1500:]
             send_callback(req.callback_url, req.build_id, "failed", error=error_log)
             return
 
@@ -665,12 +685,26 @@ def run_build(req: BuildRequest, base_url: str):
 
         apk_url = f"{base_url}/download/{apk_name}"
         send_callback(req.callback_url, req.build_id, "ready", apk_url=apk_url)
-    except subprocess.TimeoutExpired:
-        send_callback(req.callback_url, req.build_id, "failed", error="Превышено время сборки")
     except Exception as e:
         send_callback(req.callback_url, req.build_id, "failed", error=str(e))
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)
+        with active_builds_lock:
+            active_builds.pop(req.build_id, None)
+
+
+def _kill_process_group(proc: subprocess.Popen):
+    '''Убивает весь дочерний процесс Gradle (демоны/воркеры), не только основной pid'''
+    try:
+        pgid = os.getpgid(proc.pid)
+        os.killpg(pgid, signal.SIGTERM)
+        time.sleep(3)
+        os.killpg(pgid, signal.SIGKILL)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
 
 
 @app.post("/build")
@@ -705,3 +739,27 @@ async def download_apk(apk_name: str):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/status/{build_id}")
+async def build_status(build_id: int):
+    with active_builds_lock:
+        info = active_builds.get(build_id)
+    if not info:
+        return {"active": False}
+    return {
+        "active": True,
+        "stage": info.get("stage"),
+        "elapsed_seconds": round(time.time() - info["started_at"]),
+    }
+
+
+@app.get("/active-builds")
+async def list_active_builds(x_build_token: str = Header(None)):
+    if x_build_token != BUILD_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    with active_builds_lock:
+        return {
+            bid: {"stage": info.get("stage"), "elapsed_seconds": round(time.time() - info["started_at"])}
+            for bid, info in active_builds.items()
+        }
