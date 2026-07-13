@@ -7,6 +7,7 @@ import time
 import urllib.request
 import urllib.error
 import psycopg2
+import boto3
 
 from mail import send_build_ready_email, send_build_failed_email
 
@@ -16,6 +17,26 @@ APK_BUILD_SERVER_URL = os.environ.get('APK_BUILD_SERVER_URL', '').rstrip('/')
 APK_BUILD_SERVER_TOKEN = os.environ.get('APK_BUILD_SERVER_TOKEN', '')
 BUILDS_FUNCTION_URL = os.environ.get('BUILDS_FUNCTION_URL', '')
 FRONTEND_URL = os.environ.get('FRONTEND_URL', '').rstrip('/') or 'https://buildapk.ru'
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
+
+
+def upload_apk_to_s3(apk_bytes: bytes, build_id: int) -> str:
+    '''Загружает APK в S3-хранилище и возвращает публичную CDN-ссылку'''
+    s3 = boto3.client(
+        's3',
+        endpoint_url='https://bucket.poehali.dev',
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    )
+    key = f'apk/build_{build_id}.apk'
+    s3.put_object(
+        Bucket='files',
+        Key=key,
+        Body=apk_bytes,
+        ContentType='application/vnd.android.package-archive',
+    )
+    return f'https://cdn.poehali.dev/projects/{AWS_ACCESS_KEY_ID}/bucket/{key}'
 
 
 def escape(value: str) -> str:
@@ -181,6 +202,17 @@ def handler(event: dict, context) -> dict:
             if not build_id or status not in ('ready', 'failed', 'building'):
                 return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Некорректные данные callback'})}
 
+            if status == 'ready' and apk_url:
+                try:
+                    req = urllib.request.Request(apk_url)
+                    with urllib.request.urlopen(req, timeout=25) as resp:
+                        apk_bytes = resp.read()
+                    apk_url = upload_apk_to_s3(apk_bytes, int(build_id))
+                except Exception as e:
+                    status = 'failed'
+                    error_message = f'Не удалось сохранить APK-файл: {e}'
+                    apk_url = None
+
             cur.execute(
                 f"""
                 UPDATE builds
@@ -242,6 +274,14 @@ def handler(event: dict, context) -> dict:
                 return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'APK-файл не найден'})}
 
             apk_url, app_name = row
+
+            if 'cdn.poehali.dev' in apk_url:
+                return {
+                    'statusCode': 302,
+                    'headers': {**cors_headers(), 'Location': apk_url},
+                    'body': '',
+                }
+
             try:
                 req = urllib.request.Request(apk_url)
                 with urllib.request.urlopen(req, timeout=25) as resp:
