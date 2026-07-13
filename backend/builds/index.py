@@ -275,13 +275,6 @@ def handler(event: dict, context) -> dict:
 
             apk_url, app_name = row
 
-            if 'cdn.poehali.dev' in apk_url:
-                return {
-                    'statusCode': 302,
-                    'headers': {**cors_headers(), 'Location': apk_url},
-                    'body': '',
-                }
-
             try:
                 req = urllib.request.Request(apk_url)
                 with urllib.request.urlopen(req, timeout=25) as resp:
