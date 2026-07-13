@@ -211,6 +211,53 @@ def handler(event: dict, context) -> dict:
 
             return {'statusCode': 200, 'headers': headers, 'body': json.dumps({'success': True})}
 
+        if method == 'POST' and action == 'admin_retry':
+            build_id = params.get('id')
+            if not build_id:
+                return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Не указан id сборки'})}
+
+            cur.execute(
+                f"SELECT {BUILD_COLUMNS} FROM builds WHERE id = {int(build_id)}"
+            )
+            row = cur.fetchone()
+            if not row:
+                return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'Сборка не найдена'})}
+            build = row_to_build(row)
+
+            cur.execute(
+                f"SELECT icon_url, splash_color, theme_color, push_enabled, offline_enabled, "
+                f"push_provider, fcm_server_key, onesignal_app_id, onesignal_rest_api_key, "
+                f"notification_icon_set, notification_icon_name, addon_ids, config "
+                f"FROM builds WHERE id = {int(build_id)}"
+            )
+            (icon_url, splash_color, theme_color, push_enabled, offline_enabled,
+             push_provider, fcm_server_key, onesignal_app_id, onesignal_rest_api_key,
+             notification_icon_set, notification_icon_name, addon_ids, config) = cur.fetchone()
+
+            cur.execute(
+                f"UPDATE builds SET status = 'queued', error_message = NULL, updated_at = NOW() WHERE id = {int(build_id)}"
+            )
+            conn.commit()
+
+            options = build_options(
+                icon_url, splash_color, theme_color, push_enabled, offline_enabled,
+                push_provider, fcm_server_key, onesignal_app_id, onesignal_rest_api_key,
+                notification_icon_set, notification_icon_name, addon_ids, config,
+            )
+            try:
+                send_to_build_server(build['id'], build['site_url'], build['app_name'], build['package_name'], options)
+                cur.execute(
+                    f"UPDATE builds SET status = 'building', updated_at = NOW() WHERE id = {int(build_id)}"
+                )
+                conn.commit()
+                return {'statusCode': 200, 'headers': headers, 'body': json.dumps({'success': True, 'status': 'building'})}
+            except Exception as e:
+                cur.execute(
+                    f"UPDATE builds SET status = 'failed', error_message = {sql_str(str(e))}, updated_at = NOW() WHERE id = {int(build_id)}"
+                )
+                conn.commit()
+                return {'statusCode': 502, 'headers': headers, 'body': json.dumps({'error': str(e)})}
+
         user_id = get_user_id(event)
         if user_id is None:
             return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Не авторизован'})}
