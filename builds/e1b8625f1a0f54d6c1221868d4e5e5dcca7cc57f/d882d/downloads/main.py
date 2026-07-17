@@ -396,7 +396,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.view.View;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
@@ -443,8 +442,6 @@ public class MainActivity extends Activity {{
         settings.setMixedContentMode({mixed_content});
         settings.setAllowFileAccess(true);
         settings.setDomStorageEnabled(true);
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         String customUserAgent = {java_str(user_agent)};
         if (!customUserAgent.isEmpty()) {{
