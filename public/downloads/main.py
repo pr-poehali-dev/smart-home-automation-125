@@ -164,7 +164,7 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     js_bridge = cfg_bool("jsBridge")
     web_auth = req.web_auth_enabled or cfg_bool("webAuth")
     screenshot_disabled = req.screenshot_disabled or cfg_bool("screenshotDisabled")
-    app_lock = req.app_lock_enabled or ("touch-id" in (req.addon_ids or [])) or cfg_bool("appLockEnabled")
+    app_lock = req.app_lock_enabled or cfg_bool("appLockEnabled")
     offline_enabled = req.offline_enabled or cfg_bool("offlineEnabled")
     push_enabled = req.push_enabled or cfg_bool("pushEnabled")
     push_provider = (req.push_provider or cfg.get("pushProvider") or "onesignal").lower()
