@@ -107,6 +107,13 @@ export default function PreviewSection({ state }: Props) {
                         className="w-full h-full border-0"
                         onError={() => setIframeError(true)}
                         sandbox="allow-scripts allow-same-origin allow-forms"
+                        allow={[
+                          state.permCamera || state.permMedia ? "camera" : "",
+                          state.permMicrophone || state.permMedia ? "microphone" : "",
+                          state.permLocation ? "geolocation" : "",
+                        ]
+                          .filter(Boolean)
+                          .join("; ")}
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-6 text-center">
@@ -136,7 +143,10 @@ export default function PreviewSection({ state }: Props) {
         <div className="flex-1 space-y-4 min-w-0">
           <Card className="bg-neutral-950 border-red-500/20">
             <CardContent className="pt-5">
-              <p className="text-white text-sm font-medium mb-3">Разрешения приложения</p>
+              <p className="text-white text-sm font-medium mb-1">Разрешения приложения</p>
+              <p className="text-gray-500 text-[11px] mb-3">
+                Камера, микрофон и геолокация будут работать в приложении, только если включены здесь — вы можете проверить это прямо в окне предпросмотра слева.
+              </p>
               {enabledPermissions.length === 0 ? (
                 <p className="text-gray-500 text-xs">Дополнительные разрешения не включены.</p>
               ) : (
