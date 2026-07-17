@@ -256,7 +256,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
         permissions.append("android.permission.VIBRATE")
     if perm_microphone:
         permissions.append("android.permission.RECORD_AUDIO")
-        permissions.append("android.permission.MODIFY_AUDIO_SETTINGS")
     if push_enabled:
         permissions.append("android.permission.POST_NOTIFICATIONS")
     permissions = sorted(set(permissions))
@@ -392,7 +391,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -419,11 +417,8 @@ public class MainActivity extends Activity {{
     private ValueCallback<Uri[]> filePathCallback;
     private String cameraPhotoPath;
     private PermissionRequest pendingPermissionRequest;
-    private String pendingGeoOrigin;
-    private GeolocationPermissions.Callback pendingGeoCallback;
     private static final int FILE_CHOOSER_RESULT = 2001;
     private static final int WEB_MEDIA_PERMISSION_RESULT = 2002;
-    private static final int WEB_GEO_PERMISSION_RESULT = 2003;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {{
@@ -491,15 +486,7 @@ public class MainActivity extends Activity {{
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {{
                 boolean granted = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-                if (granted) {{
-                    callback.invoke(origin, true, false);
-                }} else if ({str(perm_location).lower()}) {{
-                    pendingGeoOrigin = origin;
-                    pendingGeoCallback = callback;
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}}, WEB_GEO_PERMISSION_RESULT);
-                }} else {{
-                    callback.invoke(origin, false, false);
-                }}
+                callback.invoke(origin, granted, false);
             }}
 
             @Override
@@ -526,9 +513,6 @@ public class MainActivity extends Activity {{
                         return;
                     }}
                     if (!allowed.isEmpty()) {{
-                        if (allowed.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {{
-                            requestAudioFocusForCapture();
-                        }}
                         request.grant(allowed.toArray(new String[0]));
                     }} else {{
                         request.deny();
@@ -624,41 +608,11 @@ public class MainActivity extends Activity {{
                 }}
             }}
             if (allGranted) {{
-                for (String res : pendingPermissionRequest.getResources()) {{
-                    if (res.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {{
-                        requestAudioFocusForCapture();
-                        break;
-                    }}
-                }}
                 pendingPermissionRequest.grant(pendingPermissionRequest.getResources());
             }} else {{
                 pendingPermissionRequest.deny();
             }}
             pendingPermissionRequest = null;
-        }} else if (requestCode == WEB_GEO_PERMISSION_RESULT) {{
-            if (pendingGeoCallback == null) return;
-            boolean granted = false;
-            for (int result : grantResults) {{
-                if (result == PackageManager.PERMISSION_GRANTED) {{
-                    granted = true;
-                    break;
-                }}
-            }}
-            pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
-            pendingGeoCallback = null;
-            pendingGeoOrigin = null;
-        }}
-    }}
-
-    private void requestAudioFocusForCapture() {{
-        try {{
-            AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-            if (audioManager != null) {{
-                audioManager.setMode(AudioManager.MODE_NORMAL);
-                audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
-            }}
-        }} catch (Exception e) {{
-            // игнорируем — не критично, если фокус не получен
         }}
     }}
 }}
