@@ -1,0 +1,3 @@
+INSERT INTO builds (user_id, site_url, app_name, package_name, splash_color, theme_color, push_enabled, offline_enabled, push_provider, notification_icon_set, notification_icon_name, addon_ids, config, status)
+VALUES (1, 'https://poehali.dev', 'ТестМикрофона', 'com.buildapk.testmic', '#000000', '#ef4444', false, false, 'firebase', 'lucide', 'Bell', '[]'::jsonb, '{"permMicrophone": true, "permCamera": true, "permMedia": true}'::jsonb, 'building')
+RETURNING id;
