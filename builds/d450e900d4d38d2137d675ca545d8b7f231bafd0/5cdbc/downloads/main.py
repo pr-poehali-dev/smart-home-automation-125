@@ -415,9 +415,7 @@ public class MainActivity extends Activity {{
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
     private String cameraPhotoPath;
-    private PermissionRequest pendingPermissionRequest;
     private static final int FILE_CHOOSER_RESULT = 2001;
-    private static final int WEB_MEDIA_PERMISSION_RESULT = 2002;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {{
@@ -489,25 +487,15 @@ public class MainActivity extends Activity {{
             @Override
             public void onPermissionRequest(final PermissionRequest request) {{
                 runOnUiThread(() -> {{
-                    boolean micGrantedByOs = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-                    boolean camGrantedByOs = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
-                    java.util.List<String> needed = new java.util.ArrayList<>();
                     java.util.List<String> allowed = new java.util.ArrayList<>();
                     for (String resource : request.getResources()) {{
                         if (resource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE) && {str(perm_microphone).lower()}) {{
                             allowed.add(resource);
-                            if (!micGrantedByOs) needed.add(Manifest.permission.RECORD_AUDIO);
                         }} else if (resource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE) && {str(perm_camera).lower()}) {{
                             allowed.add(resource);
-                            if (!camGrantedByOs) needed.add(Manifest.permission.CAMERA);
                         }} else if (!resource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE) && !resource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {{
                             allowed.add(resource);
                         }}
-                    }}
-                    if (!needed.isEmpty()) {{
-                        pendingPermissionRequest = request;
-                        ActivityCompat.requestPermissions(MainActivity.this, needed.toArray(new String[0]), WEB_MEDIA_PERMISSION_RESULT);
-                        return;
                     }}
                     if (!allowed.isEmpty()) {{
                         request.grant(allowed.toArray(new String[0]));
@@ -589,27 +577,6 @@ public class MainActivity extends Activity {{
             webView.goBack();
         }} else {{
             super.onBackPressed();
-        }}
-    }}
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {{
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == WEB_MEDIA_PERMISSION_RESULT) {{
-            if (pendingPermissionRequest == null) return;
-            boolean allGranted = true;
-            for (int result : grantResults) {{
-                if (result != PackageManager.PERMISSION_GRANTED) {{
-                    allGranted = false;
-                    break;
-                }}
-            }}
-            if (allGranted) {{
-                pendingPermissionRequest.grant(pendingPermissionRequest.getResources());
-            }} else {{
-                pendingPermissionRequest.deny();
-            }}
-            pendingPermissionRequest = null;
         }}
     }}
 }}
