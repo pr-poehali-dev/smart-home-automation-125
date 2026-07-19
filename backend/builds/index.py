@@ -358,6 +358,10 @@ def handler(event: dict, context) -> dict:
             addon_ids = body.get('addon_ids') or []
             config = body.get('config') or {}
 
+            if site_url.startswith('http://') and not config.get('allowHttp'):
+                site_url = 'https://' + site_url[len('http://'):]
+                config['siteUrl'] = site_url
+
             cur.execute(
                 f"""
                 INSERT INTO builds (
@@ -434,6 +438,10 @@ def handler(event: dict, context) -> dict:
             notification_icon_name = body.get('notification_icon_name') or 'Bell'
             addon_ids = body.get('addon_ids') or []
             config = body.get('config') or {}
+
+            if site_url.startswith('http://') and not config.get('allowHttp'):
+                site_url = 'https://' + site_url[len('http://'):]
+                config['siteUrl'] = site_url
 
             cur.execute(
                 f"""
