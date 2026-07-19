@@ -549,11 +549,6 @@ public class MainActivity extends Activity {{
             }}
         }});
 
-        {{}}
-        if ({str(perm_camera).lower()} || {str(perm_location).lower()} || {str(perm_media).lower()} || {str(perm_microphone).lower()}) {{
-            requestRuntimePermissions();
-        }}
-
         Uri deepData = getIntent() != null ? getIntent().getData() : null;
         if (deepData != null) {{
             webView.loadUrl(deepData.toString());
@@ -561,20 +556,6 @@ public class MainActivity extends Activity {{
             webView.loadUrl({safe_url});
         }}
         setContentView(webView);
-    }}
-
-    private void requestRuntimePermissions() {{
-        java.util.List<String> perms = new java.util.ArrayList<>();
-        if ({str(perm_camera).lower()}) perms.add(Manifest.permission.CAMERA);
-        if ({str(perm_location).lower()}) {{
-            perms.add(Manifest.permission.ACCESS_FINE_LOCATION);
-            perms.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-        }}
-        if ({str(perm_media).lower()}) perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-        if ({str(perm_microphone).lower()}) perms.add(Manifest.permission.RECORD_AUDIO);
-        if (!perms.isEmpty()) {{
-            ActivityCompat.requestPermissions(this, perms.toArray(new String[0]), 1001);
-        }}
     }}
 
     private boolean isNetworkAvailable() {{
@@ -623,6 +604,21 @@ public class MainActivity extends Activity {{
                 pendingPermissionRequest.grant(pendingPermissionRequest.getResources());
             }} else {{
                 pendingPermissionRequest.deny();
+                boolean permanentlyDenied = false;
+                for (String perm : permissions) {{
+                    if (!ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, perm)) {{
+                        permanentlyDenied = true;
+                        break;
+                    }}
+                }}
+                if (permanentlyDenied) {{
+                    android.widget.Toast.makeText(MainActivity.this,
+                        "Доступ к камере/микрофону заблокирован. Включите разрешение в настройках приложения.",
+                        android.widget.Toast.LENGTH_LONG).show();
+                    Intent settingsIntent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    settingsIntent.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(settingsIntent);
+                }}
             }}
             pendingPermissionRequest = null;
         }} else if (requestCode == WEB_GEO_PERMISSION_RESULT) {{
