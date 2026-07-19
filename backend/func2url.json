@@ -1,4 +1,5 @@
 {
+  "publish_builder": "https://functions.poehali.dev/b34c7174-4fc4-4d4c-80d3-04d4e998f13f",
   "payments": "https://functions.poehali.dev/8cabd0a5-ec9a-4731-a68a-0984f45133da",
   "builds": "https://functions.poehali.dev/8fac8567-67eb-4ccc-b490-d1a46ac8bf8a",
   "upload": "https://functions.poehali.dev/33ecac15-35bb-4cc9-8d36-ea4e78a24b2a",
