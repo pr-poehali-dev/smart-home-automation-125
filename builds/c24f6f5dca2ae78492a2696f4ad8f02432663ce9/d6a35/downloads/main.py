@@ -275,7 +275,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
 
     app_attrs = [
         'android:allowBackup="true"',
-        'android:hardwareAccelerated="true"',
         f'android:label="{xml_escape(app_name)}"',
         'android:icon="@mipmap/ic_launcher"',
         'android:theme="@style/AppTheme"',
