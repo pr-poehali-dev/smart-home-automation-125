@@ -392,7 +392,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -526,13 +525,7 @@ public class MainActivity extends Activity {{
                         return;
                     }}
                     if (!allowed.isEmpty()) {{
-                        final String[] allowedArr = allowed.toArray(new String[0]);
-                        if (allowed.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {{
-                            requestAudioFocusForCapture();
-                            webView.postDelayed(() -> request.grant(allowedArr), 150);
-                        }} else {{
-                            request.grant(allowedArr);
-                        }}
+                        request.grant(allowed.toArray(new String[0]));
                     }} else {{
                         request.deny();
                     }}
@@ -627,20 +620,7 @@ public class MainActivity extends Activity {{
                 }}
             }}
             if (allGranted) {{
-                boolean needsAudio = false;
-                for (String res : pendingPermissionRequest.getResources()) {{
-                    if (res.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {{
-                        needsAudio = true;
-                        break;
-                    }}
-                }}
-                final PermissionRequest grantedRequest = pendingPermissionRequest;
-                if (needsAudio) {{
-                    requestAudioFocusForCapture();
-                    webView.postDelayed(() -> grantedRequest.grant(grantedRequest.getResources()), 150);
-                }} else {{
-                    grantedRequest.grant(grantedRequest.getResources());
-                }}
+                pendingPermissionRequest.grant(pendingPermissionRequest.getResources());
             }} else {{
                 pendingPermissionRequest.deny();
             }}
@@ -660,49 +640,6 @@ public class MainActivity extends Activity {{
         }}
     }}
 
-    private void requestAudioFocusForCapture() {{
-        try {{
-            AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-            if (audioManager != null) {{
-                audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-                audioManager.setSpeakerphoneOn(true);
-                audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN);
-            }}
-        }} catch (Exception e) {{
-            // игнорируем — не критично, если фокус не получен
-        }}
-    }}
-
-    @Override
-    protected void onResume() {{
-        super.onResume();
-        if ({str(perm_microphone).lower()}) {{
-            try {{
-                AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-                if (audioManager != null && audioManager.getMode() != AudioManager.MODE_IN_COMMUNICATION) {{
-                    audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-                }}
-            }} catch (Exception e) {{
-                // игнорируем
-            }}
-        }}
-    }}
-
-    @Override
-    protected void onPause() {{
-        super.onPause();
-        if ({str(perm_microphone).lower()}) {{
-            try {{
-                AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-                if (audioManager != null) {{
-                    audioManager.setMode(AudioManager.MODE_NORMAL);
-                    audioManager.abandonAudioFocus(null);
-                }}
-            }} catch (Exception e) {{
-                // игнорируем
-            }}
-        }}
-    }}
 }}
 """
 
