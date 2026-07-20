@@ -382,7 +382,7 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
             )
 
     safe_url = json.dumps(site_url)
-    cache_mode = "WebSettings.LOAD_CACHE_ELSE_NETWORK" if offline_enabled and not disable_cache else "WebSettings.LOAD_DEFAULT"
+    cache_mode = "WebSettings.LOAD_DEFAULT"
     mixed_content = "WebSettings.MIXED_CONTENT_ALWAYS_ALLOW" if allow_http else "WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE"
 
     main_activity = f"""package {package_name};
@@ -463,6 +463,7 @@ public class MainActivity extends Activity {{
             settings.setSafeBrowsingEnabled(false);
         }}
         WebView.setWebContentsDebuggingEnabled(true);
+        webView.clearCache(true);
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         CookieManager cookieManager = CookieManager.getInstance();
