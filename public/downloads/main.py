@@ -257,8 +257,7 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     if perm_microphone:
         permissions.append("android.permission.RECORD_AUDIO")
         permissions.append("android.permission.MODIFY_AUDIO_SETTINGS")
-    if push_enabled:
-        permissions.append("android.permission.POST_NOTIFICATIONS")
+    permissions.append("android.permission.POST_NOTIFICATIONS")
     permissions = sorted(set(permissions))
 
     launcher_activity = "LockActivity" if app_lock else "MainActivity"
@@ -384,7 +383,7 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
 
     safe_url = json.dumps(site_url)
     cache_mode = "WebSettings.LOAD_CACHE_ELSE_NETWORK" if offline_enabled and not disable_cache else "WebSettings.LOAD_DEFAULT"
-    mixed_content = "WebSettings.MIXED_CONTENT_ALWAYS_ALLOW" if allow_http else "WebSettings.MIXED_CONTENT_NEVER_ALLOW"
+    mixed_content = "WebSettings.MIXED_CONTENT_ALWAYS_ALLOW" if allow_http else "WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE"
 
     main_activity = f"""package {package_name};
 
@@ -424,6 +423,7 @@ public class MainActivity extends Activity {{
     private static final int FILE_CHOOSER_RESULT = 2001;
     private static final int WEB_MEDIA_PERMISSION_RESULT = 2002;
     private static final int WEB_GEO_PERMISSION_RESULT = 2003;
+    private static final int WEB_NOTIFICATION_PERMISSION_RESULT = 2004;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {{
@@ -439,6 +439,8 @@ public class MainActivity extends Activity {{
         webView = new WebView(this);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+        settings.setSupportMultipleWindows(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
         settings.setCacheMode({cache_mode});
@@ -447,18 +449,23 @@ public class MainActivity extends Activity {{
         settings.setDisplayZoomControls(false);
         settings.setMixedContentMode({mixed_content});
         settings.setAllowFileAccess(true);
-        settings.setDomStorageEnabled(true);
+        settings.setAllowContentAccess(true);
+        settings.setLoadsImagesAutomatically(true);
+        settings.setBlockNetworkImage(false);
+        settings.setBlockNetworkLoads(false);
         settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setGeolocationEnabled(true);
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        cookieManager.setAcceptThirdPartyCookies(webView, true);
 
         String customUserAgent = {java_str(user_agent)};
         if (!customUserAgent.isEmpty()) {{
             settings.setUserAgentString(customUserAgent);
-        }}
-
-        if ({str(web_auth).lower()}) {{
-            CookieManager.getInstance().setAcceptCookie(true);
-            CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
         }}
 
         final String customJs = {java_str(custom_js)};
@@ -534,11 +541,44 @@ public class MainActivity extends Activity {{
             }}
 
             @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {{
+                WebView popup = new WebView(MainActivity.this);
+                WebSettings ps = popup.getSettings();
+                ps.setJavaScriptEnabled(true);
+                ps.setDomStorageEnabled(true);
+                ps.setJavaScriptCanOpenWindowsAutomatically(true);
+                ps.setSupportMultipleWindows(true);
+                ps.setMediaPlaybackRequiresUserGesture(false);
+                CookieManager.getInstance().setAcceptThirdPartyCookies(popup, true);
+                popup.setWebViewClient(new WebViewClient() {{
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView v, android.webkit.WebResourceRequest req) {{
+                        webView.loadUrl(req.getUrl().toString());
+                        return true;
+                    }}
+                }});
+                popup.setWebChromeClient(this);
+                android.webkit.WebView.WebViewTransport transport = (android.webkit.WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(popup);
+                resultMsg.sendToTarget();
+                return true;
+            }}
+
+            @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {{
+                if (filePathCallback != null) {{
+                    filePathCallback.onReceiveValue(null);
+                }}
                 filePathCallback = callback;
-                Intent contentIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                Intent contentIntent;
+                try {{
+                    contentIntent = params.createIntent();
+                }} catch (Exception e) {{
+                    contentIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                    contentIntent.setType("*/*");
+                }}
                 contentIntent.addCategory(Intent.CATEGORY_OPENABLE);
-                contentIntent.setType("*/*");
+                contentIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 Intent chooser = Intent.createChooser(contentIntent, "Выбрать файл");
                 try {{
                     startActivityForResult(chooser, FILE_CHOOSER_RESULT);
@@ -557,6 +597,12 @@ public class MainActivity extends Activity {{
             webView.loadUrl({safe_url});
         }}
         setContentView(webView);
+
+        if (android.os.Build.VERSION.SDK_INT >= 33) {{
+            if (ContextCompat.checkSelfPermission(this, "android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {{
+                ActivityCompat.requestPermissions(this, new String[]{{"android.permission.POST_NOTIFICATIONS"}}, WEB_NOTIFICATION_PERMISSION_RESULT);
+            }}
+        }}
     }}
 
     private boolean isNetworkAvailable() {{
@@ -570,14 +616,28 @@ public class MainActivity extends Activity {{
         if (requestCode == FILE_CHOOSER_RESULT) {{
             if (filePathCallback == null) return;
             Uri[] results = null;
-            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {{
-                results = new Uri[]{{data.getData()}};
+            if (resultCode == Activity.RESULT_OK && data != null) {{
+                if (data.getClipData() != null) {{
+                    int count = data.getClipData().getItemCount();
+                    results = new Uri[count];
+                    for (int i = 0; i < count; i++) {{
+                        results[i] = data.getClipData().getItemAt(i).getUri();
+                    }}
+                }} else if (data.getData() != null) {{
+                    results = new Uri[]{{data.getData()}};
+                }}
             }}
             filePathCallback.onReceiveValue(results);
             filePathCallback = null;
         }} else {{
             super.onActivityResult(requestCode, resultCode, data);
         }}
+    }}
+
+    @Override
+    protected void onPause() {{
+        super.onPause();
+        CookieManager.getInstance().flush();
     }}
 
     @Override
