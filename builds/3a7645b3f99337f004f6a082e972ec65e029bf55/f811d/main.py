@@ -457,12 +457,6 @@ public class MainActivity extends Activity {{
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
         settings.setGeolocationEnabled(true);
-        settings.setAllowFileAccessFromFileURLs(true);
-        settings.setAllowUniversalAccessFromFileURLs(true);
-        if (android.os.Build.VERSION.SDK_INT >= 26) {{
-            settings.setSafeBrowsingEnabled(false);
-        }}
-        WebView.setWebContentsDebuggingEnabled(true);
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         CookieManager cookieManager = CookieManager.getInstance();
@@ -482,11 +476,6 @@ public class MainActivity extends Activity {{
             @Override
             public void onPageFinished(WebView view, String url) {{
                 super.onPageFinished(view, url);
-                view.evaluateJavascript(
-                    "(function(){{if(window.__errHook)return;window.__errHook=1;" +
-                    "window.addEventListener('error',function(e){{console.error('JS: '+(e.message||e.type)+' @'+(e.filename||'')+':'+(e.lineno||''));}});" +
-                    "window.addEventListener('unhandledrejection',function(e){{var r=e.reason;console.error('PROMISE: '+((r&&r.message)||r));}});" +
-                    "}})();", null);
                 if (!customJs.isEmpty()) {{
                     view.evaluateJavascript(customJs, null);
                 }}
@@ -506,17 +495,6 @@ public class MainActivity extends Activity {{
         }});
 
         webView.setWebChromeClient(new WebChromeClient() {{
-            @Override
-            public boolean onConsoleMessage(android.webkit.ConsoleMessage cm) {{
-                if (cm.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {{
-                    final String msg = cm.message();
-                    runOnUiThread(() -> android.widget.Toast.makeText(MainActivity.this,
-                        "Ошибка страницы: " + (msg != null && msg.length() > 180 ? msg.substring(0, 180) : msg),
-                        android.widget.Toast.LENGTH_LONG).show());
-                }}
-                return true;
-            }}
-
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {{
                 boolean granted = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
