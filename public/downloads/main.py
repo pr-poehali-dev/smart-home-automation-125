@@ -30,8 +30,38 @@ BUILD_TOKEN = "dfff10ac14381643b517d122d109509f3a0924db82197904da629cedd31886f4"
 
 BUILDS_DIR = "/tmp/builds"
 APKS_DIR = "/tmp/apks"
+KEYSTORES_DIR = "/root/keystores"
+KEYSTORE_PASSWORD = "poluton_apk_signer_2024"
+KEYSTORE_ALIAS = "release"
 os.makedirs(BUILDS_DIR, exist_ok=True)
 os.makedirs(APKS_DIR, exist_ok=True)
+os.makedirs(KEYSTORES_DIR, exist_ok=True)
+
+
+def ensure_keystore(package_name: str, dest_path: str, build_id: int) -> None:
+    """Создаёт стабильный release-keystore для package_name (один раз) и копирует его в проект сборки."""
+    safe = re.sub(r"[^a-zA-Z0-9._-]", "_", package_name or "app")
+    persistent = os.path.join(KEYSTORES_DIR, f"{safe}.keystore")
+    if not os.path.exists(persistent):
+        logger.info(f"[build {build_id}] создаю новый release-keystore для {package_name}")
+        subprocess.run(
+            [
+                "keytool", "-genkeypair", "-v",
+                "-keystore", persistent,
+                "-alias", KEYSTORE_ALIAS,
+                "-keyalg", "RSA", "-keysize", "2048",
+                "-validity", "10950",
+                "-storepass", KEYSTORE_PASSWORD,
+                "-keypass", KEYSTORE_PASSWORD,
+                "-dname", f"CN={package_name}, OU=App, O=Poluton, L=City, S=State, C=RU",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    else:
+        logger.info(f"[build {build_id}] использую существующий release-keystore для {package_name}")
+    shutil.copy(persistent, dest_path)
 
 active_builds: Dict[int, Dict[str, Any]] = {}
 active_builds_lock = threading.Lock()
@@ -219,6 +249,7 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     if push_enabled and push_provider == "onesignal" and onesignal_app_id:
         dependencies.append("implementation 'com.onesignal:OneSignal:[4.0.0, 4.99.99]'")
 
+    keystore_path = os.path.join(work_dir, "release.keystore")
     with open(os.path.join(work_dir, "app", "build.gradle"), "w") as f:
         f.write(
             "apply plugin: 'com.android.application'\n\n"
@@ -232,8 +263,23 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
             f"        versionCode {version_code if version_code.isdigit() else '1'}\n"
             f'        versionName "{version_name}"\n'
             "    }\n"
+            "    signingConfigs {\n"
+            "        release {\n"
+            f'            storeFile file("{keystore_path}")\n'
+            f'            storePassword "{KEYSTORE_PASSWORD}"\n'
+            f'            keyAlias "{KEYSTORE_ALIAS}"\n'
+            f'            keyPassword "{KEYSTORE_PASSWORD}"\n'
+            "        }\n"
+            "    }\n"
             "    buildTypes {\n"
-            "        debug { minifyEnabled false }\n"
+            "        debug {\n"
+            "            minifyEnabled false\n"
+            "            signingConfig signingConfigs.release\n"
+            "        }\n"
+            "        release {\n"
+            "            minifyEnabled false\n"
+            "            signingConfig signingConfigs.release\n"
+            "        }\n"
             "    }\n"
             "    compileOptions {\n"
             "        sourceCompatibility JavaVersion.VERSION_1_8\n"
@@ -840,7 +886,8 @@ def run_build(req: BuildRequest, base_url: str):
         pkg = sanitize_package(req.package_name, req.build_id)
         logger.info(f"[build {req.build_id}] генерирую Android-проект (package={pkg})")
         generate_project(work_dir, pkg, req.app_name, req.site_url, req)
-        logger.info(f"[build {req.build_id}] проект сгенерирован, запускаю gradle assembleDebug")
+        ensure_keystore(pkg, os.path.join(work_dir, "release.keystore"), req.build_id)
+        logger.info(f"[build {req.build_id}] проект сгенерирован и подписан ключом, запускаю gradle assembleDebug")
 
         proc = subprocess.Popen(
             ["gradle", "assembleDebug", "--no-daemon"],
