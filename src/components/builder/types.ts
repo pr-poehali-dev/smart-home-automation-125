@@ -120,7 +120,7 @@ export const defaultBuilderState: BuilderState = {
   themeColor: "#ef4444",
   pushEnabled: false,
   offlineEnabled: false,
-  pushProvider: "firebase",
+  pushProvider: "onesignal",
   oneSignalAppId: "",
   oneSignalRestApiKey: "",
   notificationIconSet: "lucide",

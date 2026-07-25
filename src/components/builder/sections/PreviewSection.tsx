@@ -202,7 +202,7 @@ export default function PreviewSection({ state }: Props) {
               </div>
               <div>
                 <p className="text-gray-500 mb-1">Push-провайдер</p>
-                <p className="text-white">{state.pushEnabled ? state.pushProvider : "выключен"}</p>
+                <p className="text-white">{state.pushEnabled ? "OneSignal" : "выключен"}</p>
               </div>
             </CardContent>
           </Card>

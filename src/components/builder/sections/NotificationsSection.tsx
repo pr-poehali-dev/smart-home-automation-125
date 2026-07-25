@@ -25,98 +25,67 @@ export default function NotificationsSection({ state, update }: Props) {
 
           {state.pushEnabled && (
             <div className="py-4 border-b border-neutral-800 space-y-4">
-              <div className="space-y-2">
-                <Label className="text-white">Провайдер уведомлений</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => update("pushProvider", "firebase")}
-                    className={`flex items-center gap-2 rounded-lg border p-3 transition-colors ${
-                      state.pushProvider === "firebase"
-                        ? "border-red-500 bg-red-500/5"
-                        : "border-neutral-800 hover:border-red-500/30"
-                    }`}
-                  >
-                    <Icon
-                      name="Flame"
-                      size={18}
-                      className={state.pushProvider === "firebase" ? "text-red-400" : "text-gray-400"}
-                    />
-                    <span className="text-sm text-white">Firebase</span>
-                  </button>
-                  <button
-                    onClick={() => update("pushProvider", "onesignal")}
-                    className={`flex items-center gap-2 rounded-lg border p-3 transition-colors ${
-                      state.pushProvider === "onesignal"
-                        ? "border-red-500 bg-red-500/5"
-                        : "border-neutral-800 hover:border-red-500/30"
-                    }`}
-                  >
-                    <Icon
-                      name="BellRing"
-                      size={18}
-                      className={state.pushProvider === "onesignal" ? "text-red-400" : "text-gray-400"}
-                    />
-                    <span className="text-sm text-white">OneSignal</span>
-                  </button>
+              <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/5 p-3">
+                <Icon name="BellRing" size={18} className="mt-0.5 text-red-400" />
+                <div>
+                  <p className="text-sm text-white">Уведомления через OneSignal</p>
+                  <p className="text-xs text-gray-400">
+                    Бесплатный сервис push-уведомлений. Настройка занимает пару минут.
+                  </p>
                 </div>
               </div>
 
-              {state.pushProvider === "firebase" && (
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-white flex items-center gap-1">
-                    Ключ сервера Firebase Cloud Messaging
+                    Идентификатор приложения OneSignal (App ID)
+                    <Icon name="Info" size={13} className="text-gray-500" />
+                  </Label>
+                  <Input
+                    value={state.oneSignalAppId}
+                    onChange={(e) => update("oneSignalAppId", e.target.value)}
+                    placeholder="Введите App ID из личного кабинета OneSignal"
+                    className="bg-neutral-900 border-red-500/20 text-white placeholder:text-gray-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-white flex items-center gap-1">
+                    REST API Key OneSignal
                     <Icon name="Info" size={13} className="text-gray-500" />
                   </Label>
                   <Input
                     type="password"
-                    value={state.fcmServerKey}
-                    onChange={(e) => update("fcmServerKey", e.target.value)}
-                    placeholder="AAAA••••••••••••••••••••"
+                    value={state.oneSignalRestApiKey}
+                    onChange={(e) => update("oneSignalRestApiKey", e.target.value)}
+                    placeholder="••••••••••••••••••••••••"
                     className="bg-neutral-900 border-red-500/20 text-white placeholder:text-gray-500"
                   />
                 </div>
-              )}
 
-              {state.pushProvider === "onesignal" && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-white flex items-center gap-1">
-                      Идентификатор приложения OneSignal (App ID)
-                      <Icon name="Info" size={13} className="text-gray-500" />
-                    </Label>
-                    <Input
-                      value={state.oneSignalAppId}
-                      onChange={(e) => update("oneSignalAppId", e.target.value)}
-                      placeholder="Введите App ID из личного кабинета OneSignal"
-                      className="bg-neutral-900 border-red-500/20 text-white placeholder:text-gray-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-white flex items-center gap-1">
-                      REST API Key OneSignal
-                      <Icon name="Info" size={13} className="text-gray-500" />
-                    </Label>
-                    <Input
-                      type="password"
-                      value={state.oneSignalRestApiKey}
-                      onChange={(e) => update("oneSignalRestApiKey", e.target.value)}
-                      placeholder="••••••••••••••••••••••••"
-                      className="bg-neutral-900 border-red-500/20 text-white placeholder:text-gray-500"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    У меня нет идентификатора приложения.{" "}
-                    <a
-                      href="https://documentation.onesignal.com/docs/accounts-and-keys"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-red-400 hover:underline"
-                    >
-                      Пошаговые инструкции
-                    </a>
-                  </p>
+                <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-3 space-y-1.5">
+                  <p className="text-xs font-medium text-white">Как получить эти данные:</p>
+                  <ol className="text-xs text-gray-400 space-y-1 list-decimal list-inside">
+                    <li>
+                      Зарегистрируйтесь на{" "}
+                      <a href="https://onesignal.com" target="_blank" rel="noreferrer" className="text-red-400 hover:underline">
+                        onesignal.com
+                      </a>{" "}
+                      и создайте новое приложение (New App/Website).
+                    </li>
+                    <li>Выберите платформу Google Android (FCM) и следуйте мастеру настройки.</li>
+                    <li>Откройте Settings → Keys &amp; IDs — там будут App ID и REST API Key.</li>
+                    <li>Скопируйте оба значения в поля выше.</li>
+                  </ol>
+                  <a
+                    href="https://documentation.onesignal.com/docs/accounts-and-keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-red-400 hover:underline inline-block pt-1"
+                  >
+                    Подробная инструкция OneSignal →
+                  </a>
                 </div>
-              )}
+              </div>
             </div>
           )}
 

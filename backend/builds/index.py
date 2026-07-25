@@ -349,7 +349,7 @@ def handler(event: dict, context) -> dict:
             theme_color = body.get('theme_color') or '#ef4444'
             push_enabled = bool(body.get('push_enabled', False))
             offline_enabled = bool(body.get('offline_enabled', False))
-            push_provider = body.get('push_provider') or 'firebase'
+            push_provider = body.get('push_provider') or 'onesignal'
             fcm_server_key = body.get('fcm_server_key') or None
             onesignal_app_id = body.get('onesignal_app_id') or None
             onesignal_rest_api_key = body.get('onesignal_rest_api_key') or None
@@ -430,7 +430,7 @@ def handler(event: dict, context) -> dict:
             theme_color = body.get('theme_color') or '#ef4444'
             push_enabled = bool(body.get('push_enabled', False))
             offline_enabled = bool(body.get('offline_enabled', False))
-            push_provider = body.get('push_provider') or 'firebase'
+            push_provider = body.get('push_provider') or 'onesignal'
             fcm_server_key = body.get('fcm_server_key') or None
             onesignal_app_id = body.get('onesignal_app_id') or None
             onesignal_rest_api_key = body.get('onesignal_rest_api_key') or None
