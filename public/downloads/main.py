@@ -280,7 +280,7 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     if app_lock:
         dependencies.append("implementation 'androidx.biometric:biometric:1.1.0'")
     if push_enabled and push_provider == "onesignal" and onesignal_app_id:
-        dependencies.append("implementation 'com.onesignal:OneSignal:[4.0.0, 4.99.99]'")
+        dependencies.append("implementation 'com.onesignal:OneSignal:[5.1.6, 5.99.99]'")
 
     keystore_path = os.path.join(work_dir, "release.keystore")
     with open(os.path.join(work_dir, "app", "build.gradle"), "w") as f:
@@ -858,14 +858,16 @@ public class LockActivity extends AppCompatActivity {{
 
 import android.app.Application;
 import com.onesignal.OneSignal;
+import com.onesignal.Continue;
+import com.onesignal.debug.LogLevel;
 
 public class App extends Application {{
     @Override
     public void onCreate() {{
         super.onCreate();
-        OneSignal.setLogLevel(OneSignal.LOG_LEVEL.NONE, OneSignal.LOG_LEVEL.NONE);
-        OneSignal.initWithContext(this);
-        OneSignal.setAppId({java_str(onesignal_app_id)});
+        OneSignal.getDebug().setLogLevel(LogLevel.WARN);
+        OneSignal.initWithContext(this, {java_str(onesignal_app_id)});
+        OneSignal.getNotifications().requestPermission(true, Continue.none());
     }}
 }}
 """
