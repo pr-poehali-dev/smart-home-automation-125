@@ -142,32 +142,7 @@ def write_default_icon(res_dir: str):
             f.write(data)
 
 
-def _write_adaptive_icon(res_dir: str, bg_color: str):
-    """Создаёт adaptive icon (Android 8+): foreground-слой + цветной фон."""
-    anydpi = os.path.join(res_dir, "mipmap-anydpi-v26")
-    os.makedirs(anydpi, exist_ok=True)
-    xml = (
-        '<?xml version="1.0" encoding="utf-8"?>\n'
-        '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
-        '    <background android:drawable="@color/ic_launcher_background" />\n'
-        '    <foreground android:drawable="@mipmap/ic_launcher_foreground" />\n'
-        "</adaptive-icon>\n"
-    )
-    with open(os.path.join(anydpi, "ic_launcher.xml"), "w") as f:
-        f.write(xml)
-    with open(os.path.join(anydpi, "ic_launcher_round.xml"), "w") as f:
-        f.write(xml)
-    values_dir = os.path.join(res_dir, "values")
-    os.makedirs(values_dir, exist_ok=True)
-    with open(os.path.join(values_dir, "ic_launcher_background.xml"), "w") as f:
-        f.write(
-            '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
-            f'    <color name="ic_launcher_background">{bg_color}</color>\n'
-            "</resources>\n"
-        )
-
-
-def download_icon(icon_url: str, res_dir: str, bg_color: str = "#1a1025") -> bool:
+def download_icon(icon_url: str, res_dir: str) -> bool:
     try:
         req = urllib.request.Request(icon_url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=20) as resp:
@@ -186,14 +161,6 @@ def download_icon(icon_url: str, res_dir: str, bg_color: str = "#1a1025") -> boo
                 resized = img.resize((size, size), Image.LANCZOS)
                 resized.save(os.path.join(out_dir, "ic_launcher.png"))
                 resized.save(os.path.join(out_dir, "ic_launcher_round.png"))
-                # foreground-слой для adaptive: иконка в центре с safe-zone (~66% от canvas)
-                fg = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-                inner = int(size * 0.66)
-                icon_inner = img.resize((inner, inner), Image.LANCZOS)
-                off = (size - inner) // 2
-                fg.paste(icon_inner, (off, off), icon_inner)
-                fg.save(os.path.join(out_dir, "ic_launcher_foreground.png"))
-            _write_adaptive_icon(res_dir, bg_color)
             return True
         except ImportError:
             for folder in MIPMAP_SIZES:
@@ -445,10 +412,9 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
             "</layer-list>\n"
         )
 
-    icon_bg = color_or(cfg.get("iconBackground"), color_or(splash_color, "#1a1025"))
     icon_ok = False
     if req.icon_url:
-        icon_ok = download_icon(req.icon_url, res_dir, icon_bg)
+        icon_ok = download_icon(req.icon_url, res_dir)
     if not icon_ok:
         write_default_icon(res_dir)
 
