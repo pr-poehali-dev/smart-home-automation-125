@@ -44,6 +44,14 @@ export default function AppBuilder() {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoadingBuild, setIsLoadingBuild] = useState(!!buildId)
 
+  const normalizeState = (raw: Partial<BuilderState>): BuilderState => ({
+    ...defaultBuilderState,
+    ...raw,
+    appLockEnabled: raw.appLockEnabled === true,
+    webAuth: raw.webAuth === true,
+    screenshotDisabled: raw.screenshotDisabled === true,
+  })
+
   const goToDocs = (topic?: string) => {
     setDocsTopic(topic)
     setActive("documentation")
@@ -58,7 +66,7 @@ export default function AppBuilder() {
     const draft = localStorage.getItem("buildapk_draft")
     if (draft) {
       try {
-        setState({ ...defaultBuilderState, ...JSON.parse(draft) })
+        setState(normalizeState(JSON.parse(draft)))
       } catch {
         // ignore corrupted draft
       }
@@ -72,7 +80,7 @@ export default function AppBuilder() {
       .then(async (res) => {
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || "Не удалось загрузить сборку")
-        setState({ ...defaultBuilderState, ...(data.config || {}) })
+        setState(normalizeState(data.config || {}))
       })
       .catch((err) => {
         toast({
@@ -121,6 +129,12 @@ export default function AppBuilder() {
       return
     }
 
+    const authAddonIds = ["touch-id", "touch-id-2", "touch-id-3", "passcode-lock"]
+    const wantsLock = state.appLockEnabled === true || state.webAuth === true
+    const cleanAddonIds = wantsLock
+      ? state.addedAddonIds
+      : (state.addedAddonIds || []).filter((id) => !authAddonIds.includes(id))
+
     setIsSaving(true)
     try {
       const res = await fetch(buildId ? `${BUILDS_URL}?id=${buildId}` : BUILDS_URL, {
@@ -141,8 +155,17 @@ export default function AppBuilder() {
           notification_icon_set: state.notificationIconSet,
           notification_icon_name: state.notificationIconName,
           icon_style: state.iconStyle,
-          addon_ids: state.addedAddonIds,
-          config: state,
+          app_lock_enabled: state.appLockEnabled === true,
+          web_auth: state.webAuth === true,
+          screenshot_disabled: state.screenshotDisabled === true,
+          addon_ids: cleanAddonIds,
+          config: {
+            ...state,
+            appLockEnabled: state.appLockEnabled === true,
+            webAuth: state.webAuth === true,
+            screenshotDisabled: state.screenshotDisabled === true,
+            addedAddonIds: cleanAddonIds,
+          },
         }),
       })
       const data = await res.json()
