@@ -81,7 +81,7 @@ export const defaultBuilderState: BuilderState = {
   packageName: "",
   versionCode: "1",
   versionName: "1.0",
-  iconUrl: "",
+  iconUrl: "https://cdn.poehali.dev/projects/b471473c-c1c9-4346-909f-afc6a80feb03/bucket/b567d9e6-9f7a-4562-a959-8d5ddb15d139.png",
 
   splashType: "animation",
   splashColor: "#1A1025",
