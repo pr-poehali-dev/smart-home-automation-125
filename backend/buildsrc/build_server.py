@@ -742,6 +742,7 @@ public class MainActivity extends Activity {{
         }} else {{
             webView.loadUrl({safe_url});
         }}
+        webView.addJavascriptInterface(new IconBridge(), "AndroidIconNative");
         setContentView(webView);
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {{
