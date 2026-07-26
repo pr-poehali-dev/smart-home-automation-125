@@ -23,6 +23,7 @@ declare global {
 export default function AppIconSwitcher() {
   const [selected, setSelected] = useState("default")
   const [nativeAvailable, setNativeAvailable] = useState(false)
+  const [status, setStatus] = useState("")
 
   useEffect(() => {
     setNativeAvailable(typeof window !== "undefined" && !!window.AndroidIcon)
@@ -33,8 +34,16 @@ export default function AppIconSwitcher() {
   const handleSelect = (styleId: string) => {
     setSelected(styleId)
     localStorage.setItem(STORAGE_KEY, styleId)
-    if (window.AndroidIcon?.setIcon) {
-      window.AndroidIcon.setIcon(styleId)
+    const bridge = typeof window !== "undefined" ? window.AndroidIcon : undefined
+    if (bridge && typeof bridge.setIcon === "function") {
+      try {
+        bridge.setIcon(styleId)
+        setStatus(`Иконка «${styleId}» отправлена в приложение ✓`)
+      } catch (e) {
+        setStatus("Ошибка вызова: " + (e instanceof Error ? e.message : String(e)))
+      }
+    } else {
+      setStatus("Нативный мост AndroidIcon не найден (открыто не в приложении?)")
     }
   }
 
@@ -83,6 +92,12 @@ export default function AppIconSwitcher() {
         <p className="mt-4 text-xs text-amber-400/80 flex items-center gap-1.5">
           <Icon name="Info" size={14} />
           Смена иконки на рабочем столе работает только в установленном приложении.
+        </p>
+      )}
+
+      {status && (
+        <p className="mt-3 text-xs text-gray-300 rounded-lg bg-neutral-900 border border-neutral-800 p-2">
+          {status}
         </p>
       )}
     </div>
