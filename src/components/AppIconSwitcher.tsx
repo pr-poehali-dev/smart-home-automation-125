@@ -4,7 +4,11 @@ import Icon from "@/components/ui/icon"
 const ICONS_BASE = "https://xn----utbhbbdxh.xn--p1ai/icons-set"
 
 const ICON_STYLES = [
-  { id: "default", label: "Основная" },
+  {
+    id: "default",
+    label: "Основная",
+    img: "https://cdn.poehali.dev/projects/b471473c-c1c9-4346-909f-afc6a80feb03/bucket/b567d9e6-9f7a-4562-a959-8d5ddb15d139.png",
+  },
   { id: "gradient", label: "Градиент" },
   { id: "dark", label: "Тёмная" },
   { id: "ocean", label: "Океан" },
@@ -69,7 +73,7 @@ export default function AppIconSwitcher() {
             >
               <div className="relative">
                 <img
-                  src={`${ICONS_BASE}/${s.id}-192.png`}
+                  src={s.img ?? `${ICONS_BASE}/${s.id}-192.png`}
                   alt={s.label}
                   className="h-16 w-16 rounded-2xl object-cover"
                   loading="lazy"
