@@ -14,6 +14,7 @@ import Profile from "./pages/webapp/Profile";
 import Notifications from "./pages/webapp/Notifications";
 import Billing from "./pages/webapp/Billing";
 import Referrals from "./pages/webapp/Referrals";
+import IconSwitcher from "./pages/IconSwitcher";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/referrals" element={<Referrals />} />
+            <Route path="/icon-switcher" element={<IconSwitcher />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
