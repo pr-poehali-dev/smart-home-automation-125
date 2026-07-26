@@ -1,0 +1,1 @@
+{"tests": [{"name": "Отдаёт исходник сервера сборки", "method": "GET", "path": "/", "expectedStatus": 200}]}
