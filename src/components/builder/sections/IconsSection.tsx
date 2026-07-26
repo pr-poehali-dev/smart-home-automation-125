@@ -8,11 +8,15 @@ interface Props {
   update: <K extends keyof BuilderState>(key: K, value: BuilderState[K]) => void
 }
 
-const presets = [
-  { id: "default", label: "Стандартная", icon: "Smartphone" },
-  { id: "rounded", label: "Скруглённая", icon: "Square" },
-  { id: "circle", label: "Круглая", icon: "Circle" },
-  { id: "squircle", label: "Сквиркл", icon: "Hexagon" },
+const ICONS_BASE = "https://xn----utbhbbdxh.xn--p1ai/icons-set"
+
+export const iconStyles = [
+  { id: "default", label: "Основная" },
+  { id: "gradient", label: "Градиент" },
+  { id: "dark", label: "Тёмная" },
+  { id: "ocean", label: "Океан" },
+  { id: "gold", label: "Золото" },
+  { id: "minimal", label: "Минимал" },
 ]
 
 export default function IconsSection({ state, update }: Props) {
@@ -20,29 +24,45 @@ export default function IconsSection({ state, update }: Props) {
     <div className="max-w-5xl space-y-6">
       <Card className="bg-neutral-950 border-red-500/20">
         <CardContent className="pt-6">
-          <p className="text-white text-sm font-medium mb-1">Форма значка приложения</p>
+          <p className="text-white text-sm font-medium mb-1">Иконка приложения</p>
           <p className="text-gray-500 text-xs mb-4">
-            Выберите, как будет выглядеть значок вашего приложения на экране устройства.
+            Как приложение выглядит на экране телефона. Иконку можно сменить прямо в готовом
+            приложении — она обновится на рабочем столе.
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {presets.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => update("iconPreset", p.id)}
-                className={`flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors ${
-                  state.iconPreset === p.id
-                    ? "border-red-500 bg-red-500/5"
-                    : "border-neutral-800 hover:border-red-500/30"
-                }`}
-              >
-                <Icon
-                  name={p.icon}
-                  size={26}
-                  className={state.iconPreset === p.id ? "text-red-400" : "text-gray-400"}
-                />
-                <span className="text-xs text-white">{p.label}</span>
-              </button>
-            ))}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            {iconStyles.map((s) => {
+              const isActive = state.iconStyle === s.id
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => update("iconStyle", s.id)}
+                  className={`flex flex-col items-center gap-2 rounded-lg border p-3 transition-colors ${
+                    isActive
+                      ? "border-red-500 bg-red-500/5"
+                      : "border-neutral-800 hover:border-red-500/30"
+                  }`}
+                >
+                  <div className="relative">
+                    <img
+                      src={`${ICONS_BASE}/${s.id}-192.png`}
+                      alt={s.label}
+                      className="h-14 w-14 rounded-2xl object-cover"
+                      loading="lazy"
+                    />
+                    {isActive && (
+                      <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
+                        <Icon name="Check" size={12} className="text-white" />
+                      </span>
+                    )}
+                  </div>
+                  <span
+                    className={`text-xs ${isActive ? "text-red-400" : "text-gray-400"}`}
+                  >
+                    {s.label}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </CardContent>
       </Card>

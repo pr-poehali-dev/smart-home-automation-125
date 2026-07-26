@@ -140,6 +140,7 @@ export default function AppBuilder() {
           onesignal_rest_api_key: state.oneSignalRestApiKey || undefined,
           notification_icon_set: state.notificationIconSet,
           notification_icon_name: state.notificationIconName,
+          icon_style: state.iconStyle,
           addon_ids: state.addedAddonIds,
           config: state,
         }),
