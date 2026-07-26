@@ -583,11 +583,17 @@ public class MainActivity extends Activity {{
                     return false;
                 }}
                 try {{
-                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    Intent intent;
+                    if ("intent".equals(scheme)) {{
+                        intent = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME);
+                    }} else {{
+                        intent = new Intent(Intent.ACTION_VIEW, uri);
+                    }}
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                 }} catch (Exception e) {{
-                    // нет приложения для этой ссылки — молча игнорируем
+                    runOnUiThread(() -> android.widget.Toast.makeText(MainActivity.this,
+                        "Для оплаты установите приложение банка", android.widget.Toast.LENGTH_LONG).show());
                 }}
                 return true;
             }}
@@ -682,7 +688,18 @@ public class MainActivity extends Activity {{
                 popup.setWebViewClient(new WebViewClient() {{
                     @Override
                     public boolean shouldOverrideUrlLoading(WebView v, android.webkit.WebResourceRequest req) {{
-                        webView.loadUrl(req.getUrl().toString());
+                        Uri u = req.getUrl();
+                        String s = u.getScheme();
+                        if (s != null && (s.equals("http") || s.equals("https"))) {{
+                            webView.loadUrl(u.toString());
+                        }} else {{
+                            try {{
+                                Intent i = new Intent(Intent.ACTION_VIEW, u);
+                                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(i);
+                            }} catch (Exception e) {{
+                            }}
+                        }}
                         return true;
                     }}
                 }});
