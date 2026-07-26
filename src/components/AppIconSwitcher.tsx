@@ -1,19 +1,14 @@
 import { useEffect, useState } from "react"
 import Icon from "@/components/ui/icon"
+import { appIconStyles } from "@/components/builder/appIconStyles"
 
-const ICON_STYLES = [
-  {
-    id: "default",
-    label: "Основная",
-    img: "https://cdn.poehali.dev/projects/b471473c-c1c9-4346-909f-afc6a80feb03/bucket/b567d9e6-9f7a-4562-a959-8d5ddb15d139.png",
-  },
-]
+const ICON_STYLES = appIconStyles.map((s) => ({ id: s.id, label: s.label, img: s.url }))
 
 const STORAGE_KEY = "app_icon_style"
 
 declare global {
   interface Window {
-    AndroidIcon?: { setIcon: (style: string) => void }
+    AndroidIconNative?: { setIcon: (style: string) => void; isAvailable?: () => boolean }
   }
 }
 
@@ -23,7 +18,7 @@ export default function AppIconSwitcher() {
   const [status, setStatus] = useState("")
 
   useEffect(() => {
-    setNativeAvailable(typeof window !== "undefined" && !!window.AndroidIcon)
+    setNativeAvailable(typeof window !== "undefined" && !!window.AndroidIconNative)
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) setSelected(saved)
   }, [])
@@ -31,16 +26,16 @@ export default function AppIconSwitcher() {
   const handleSelect = (styleId: string) => {
     setSelected(styleId)
     localStorage.setItem(STORAGE_KEY, styleId)
-    const bridge = typeof window !== "undefined" ? window.AndroidIcon : undefined
+    const bridge = typeof window !== "undefined" ? window.AndroidIconNative : undefined
     if (bridge && typeof bridge.setIcon === "function") {
       try {
         bridge.setIcon(styleId)
-        setStatus(`Иконка «${styleId}» отправлена в приложение ✓`)
+        setStatus("Иконка применена. На рабочем столе обновится через несколько секунд.")
       } catch (e) {
         setStatus("Ошибка вызова: " + (e instanceof Error ? e.message : String(e)))
       }
     } else {
-      setStatus("Нативный мост AndroidIcon не найден (открыто не в приложении?)")
+      setStatus("Смена иконки доступна только в установленном приложении.")
     }
   }
 

@@ -24,6 +24,7 @@ import SupportSection from "@/components/builder/sections/SupportSection"
 import DevicesSection from "@/components/builder/sections/DevicesSection"
 import IconsSection from "@/components/builder/sections/IconsSection"
 import AddonsMarketplaceSection from "@/components/builder/sections/AddonsMarketplaceSection"
+import { buildIconStyles } from "@/components/builder/appIconStyles"
 import {
   BuilderState,
   defaultBuilderState,
@@ -165,6 +166,8 @@ export default function AppBuilder() {
             webAuth: state.webAuth === true,
             screenshotDisabled: state.screenshotDisabled === true,
             addedAddonIds: cleanAddonIds,
+            iconStyle: state.iconStyle,
+            iconStyles: buildIconStyles(state),
           },
         }),
       })

@@ -208,67 +208,6 @@ def download_icon(icon_url: str, res_dir: str, bg_color: str = "#1a1025") -> boo
         return False
 
 
-def download_style_icon(icon_url: str, res_dir: str, style_id: str, bg_color: str = "#1a1025") -> bool:
-    """Раскладывает иконку стиля под именем ic_launcher_<style_id> (+ adaptive-слои и alias-xml)."""
-    safe_id = re.sub(r"[^a-z0-9_]", "", (style_id or "").lower())
-    if not safe_id:
-        return False
-    name = f"ic_launcher_{safe_id}"
-    try:
-        req = urllib.request.Request(icon_url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            data = resp.read()
-        if not data:
-            return False
-
-        try:
-            from PIL import Image
-            import io
-
-            img = Image.open(io.BytesIO(data)).convert("RGBA")
-            for folder, size in MIPMAP_SIZES.items():
-                out_dir = os.path.join(res_dir, folder)
-                os.makedirs(out_dir, exist_ok=True)
-                img.resize((size, size), Image.LANCZOS).save(os.path.join(out_dir, f"{name}.png"))
-                fg = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-                inner = int(size * 0.66)
-                icon_inner = img.resize((inner, inner), Image.LANCZOS)
-                off = (size - inner) // 2
-                fg.paste(icon_inner, (off, off), icon_inner)
-                fg.save(os.path.join(out_dir, f"{name}_foreground.png"))
-        except ImportError:
-            for folder in MIPMAP_SIZES:
-                out_dir = os.path.join(res_dir, folder)
-                os.makedirs(out_dir, exist_ok=True)
-                with open(os.path.join(out_dir, f"{name}.png"), "wb") as f:
-                    f.write(data)
-
-        # adaptive-icon xml для этого стиля (Android 8+)
-        anydpi = os.path.join(res_dir, "mipmap-anydpi-v26")
-        os.makedirs(anydpi, exist_ok=True)
-        bg_res = f"ic_launcher_background_{safe_id}"
-        adaptive_xml = (
-            '<?xml version="1.0" encoding="utf-8"?>\n'
-            '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
-            f'    <background android:drawable="@color/{bg_res}" />\n'
-            f'    <foreground android:drawable="@mipmap/{name}_foreground" />\n'
-            "</adaptive-icon>\n"
-        )
-        with open(os.path.join(anydpi, f"{name}.xml"), "w") as f:
-            f.write(adaptive_xml)
-        values_dir = os.path.join(res_dir, "values")
-        os.makedirs(values_dir, exist_ok=True)
-        with open(os.path.join(values_dir, f"{bg_res}.xml"), "w") as f:
-            f.write(
-                '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
-                f'    <color name="{bg_res}">{bg_color}</color>\n'
-                "</resources>\n"
-            )
-        return True
-    except Exception:
-        return False
-
-
 def generate_project(work_dir: str, package_name: str, app_name: str, site_url: str, req: BuildRequest):
     cfg = req.config or {}
 
@@ -306,24 +245,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     status_bar_color = color_or(cfg.get("statusBarColor"), theme_color)
     nav_bar_color = color_or(cfg.get("navBarColor"), "#FFFFFF")
 
-    # Стили иконок для переключения на рабочем столе (activity-alias).
-    # config.iconStyles = [{"id": "default", "url": "https://..."}, ...]
-    raw_styles = cfg.get("iconStyles") or []
-    icon_styles = []
-    seen_ids = set()
-    for s in raw_styles:
-        if not isinstance(s, dict):
-            continue
-        sid = re.sub(r"[^a-z0-9_]", "", str(s.get("id") or "").lower())
-        surl = str(s.get("url") or "").strip()
-        if sid and surl and sid not in seen_ids:
-            seen_ids.add(sid)
-            icon_styles.append({"id": sid, "url": surl})
-    active_style = re.sub(r"[^a-z0-9_]", "", str(cfg.get("iconStyle") or "").lower())
-    if icon_styles and active_style not in seen_ids:
-        active_style = icon_styles[0]["id"]
-    styles_icon_bg = color_or(cfg.get("iconBackground"), color_or(splash_color, "#1a1025"))
-
     package_path = package_name.replace(".", "/")
     java_dir = os.path.join(work_dir, "app", "src", "main", "java", package_path)
     res_dir = os.path.join(work_dir, "app", "src", "main", "res")
@@ -334,19 +255,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     os.makedirs(os.path.join(res_dir, "values"), exist_ok=True)
     os.makedirs(os.path.join(res_dir, "drawable"), exist_ok=True)
     os.makedirs(os.path.join(res_dir, "xml"), exist_ok=True)
-
-    # Скачиваем иконки-стили ДО генерации манифеста, чтобы alias'ы ссылались
-    # только на реально существующие ресурсы (иначе aapt упадёт).
-    if len(icon_styles) > 1:
-        ok_styles = []
-        for st in icon_styles:
-            if download_style_icon(st["url"], res_dir, st["id"], styles_icon_bg):
-                ok_styles.append(st)
-            else:
-                logger.warning(f"[build {req.build_id}] пропущен стиль иконки {st['id']} — не скачался")
-        icon_styles = ok_styles
-        if active_style not in {s["id"] for s in icon_styles} and icon_styles:
-            active_style = icon_styles[0]["id"]
 
     with open(os.path.join(work_dir, "settings.gradle"), "w") as f:
         f.write("include ':app'\nrootProject.name = 'GeneratedApp'\n")
@@ -475,15 +383,11 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
         manifest.append(f"        {a}")
     manifest.append("        >")
 
-    use_alias = len(icon_styles) > 1
-    # Когда стилей несколько — LAUNCHER-точка выносится в activity-alias,
-    # чтобы иконку можно было переключать на лету. Иначе launcher-фильтр остаётся на activity.
     manifest.append(f'        <activity android:name=".{launcher_activity}" android:exported="true" android:screenOrientation="{orientation}">')
-    if not use_alias:
-        manifest.append("            <intent-filter>")
-        manifest.append('                <action android:name="android.intent.action.MAIN" />')
-        manifest.append('                <category android:name="android.intent.category.LAUNCHER" />')
-        manifest.append("            </intent-filter>")
+    manifest.append("            <intent-filter>")
+    manifest.append('                <action android:name="android.intent.action.MAIN" />')
+    manifest.append('                <category android:name="android.intent.category.LAUNCHER" />')
+    manifest.append("            </intent-filter>")
     if deep_links and url_scheme:
         manifest.append("            <intent-filter>")
         manifest.append('                <action android:name="android.intent.action.VIEW" />')
@@ -492,23 +396,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
         manifest.append(f'                <data android:scheme="{xml_escape(url_scheme)}" />')
         manifest.append("            </intent-filter>")
     manifest.append("        </activity>")
-
-    if use_alias:
-        for st in icon_styles:
-            sid = st["id"]
-            enabled = "true" if sid == active_style else "false"
-            alias_name = f".Icon_{sid}"
-            manifest.append(
-                f'        <activity-alias android:name="{alias_name}"'
-                f' android:enabled="{enabled}" android:exported="true"'
-                f' android:icon="@mipmap/ic_launcher_{sid}"'
-                f' android:targetActivity=".{launcher_activity}">'
-            )
-            manifest.append("            <intent-filter>")
-            manifest.append('                <action android:name="android.intent.action.MAIN" />')
-            manifest.append('                <category android:name="android.intent.category.LAUNCHER" />')
-            manifest.append("            </intent-filter>")
-            manifest.append("        </activity-alias>")
 
     if app_lock:
         manifest.append('        <activity android:name=".MainActivity" android:exported="false" />')
@@ -592,9 +479,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     safe_url = json.dumps(site_url)
     cache_mode = "WebSettings.LOAD_DEFAULT"
     mixed_content = "WebSettings.MIXED_CONTENT_ALWAYS_ALLOW" if allow_http else "WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE"
-
-    # Java-массив id стилей иконок для моста AndroidIcon (переключение alias'ов на рабочем столе).
-    icon_alias_ids = ", ".join(json.dumps(s["id"]) for s in icon_styles) if len(icon_styles) > 1 else ""
 
     main_activity = f"""package {package_name};
 
@@ -858,7 +742,6 @@ public class MainActivity extends Activity {{
         }} else {{
             webView.loadUrl({safe_url});
         }}
-        webView.addJavascriptInterface(new IconBridge(), "AndroidIconNative");
         setContentView(webView);
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {{
@@ -957,44 +840,6 @@ public class MainActivity extends Activity {{
             pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
             pendingGeoCallback = null;
             pendingGeoOrigin = null;
-        }}
-    }}
-
-    public class IconBridge {{
-        private final String[] styleIds = new String[]{{ {icon_alias_ids} }};
-
-        @android.webkit.JavascriptInterface
-        public void setIcon(final String styleId) {{
-            if (styleId == null || styleIds.length == 0) return;
-            boolean known = false;
-            for (String s : styleIds) {{ if (s.equals(styleId)) {{ known = true; break; }} }}
-            if (!known) return;
-            runOnUiThread(new Runnable() {{
-                @Override
-                public void run() {{
-                    try {{
-                        PackageManager pm = getPackageManager();
-                        String pkg = getPackageName();
-                        for (String s : styleIds) {{
-                            android.content.ComponentName comp =
-                                new android.content.ComponentName(pkg, pkg + ".Icon_" + s);
-                            int state = s.equals(styleId)
-                                ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-                                : PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
-                            pm.setComponentEnabledSetting(comp, state, PackageManager.DONT_KILL_APP);
-                        }}
-                        getSharedPreferences("app_icon", MODE_PRIVATE)
-                            .edit().putString("style", styleId).apply();
-                    }} catch (Exception e) {{
-                        // игнорируем — иконку сменить не удалось
-                    }}
-                }}
-            }});
-        }}
-
-        @android.webkit.JavascriptInterface
-        public boolean isAvailable() {{
-            return styleIds.length > 0;
         }}
     }}
 
