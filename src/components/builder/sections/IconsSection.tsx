@@ -2,16 +2,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import Icon from "@/components/ui/icon"
 import { BuilderState } from "../types"
 import { notificationIconSets } from "../notificationIconSets"
+import { appIconStyles } from "../appIconStyles"
 
 interface Props {
   state: BuilderState
   update: <K extends keyof BuilderState>(key: K, value: BuilderState[K]) => void
 }
 
-const DEFAULT_ICON =
-  "https://cdn.poehali.dev/projects/b471473c-c1c9-4346-909f-afc6a80feb03/bucket/b567d9e6-9f7a-4562-a959-8d5ddb15d139.png"
-
-export const iconStyles = [{ id: "default", label: "Основная" }]
+export const iconStyles = appIconStyles.map((s) => ({ id: s.id, label: s.label }))
 
 export default function IconsSection({ state, update }: Props) {
   return (
@@ -20,12 +18,13 @@ export default function IconsSection({ state, update }: Props) {
         <CardContent className="pt-6">
           <p className="text-white text-sm font-medium mb-1">Иконка приложения</p>
           <p className="text-gray-500 text-xs mb-4">
-            Как приложение выглядит на экране телефона. Этот значок попадёт в сборку. Чтобы
-            загрузить свой — используйте раздел «Информация о приложении».
+            Выберите значок по умолчанию. В готовом приложении иконку можно переключать на
+            рабочем столе телефона. Свой значок можно загрузить в разделе «Информация о приложении».
           </p>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            {iconStyles.map((s) => {
+            {appIconStyles.map((s) => {
               const isActive = state.iconStyle === s.id
+              const preview = s.id === "default" && state.iconUrl ? state.iconUrl : s.url
               return (
                 <button
                   key={s.id}
@@ -38,7 +37,7 @@ export default function IconsSection({ state, update }: Props) {
                 >
                   <div className="relative">
                     <img
-                      src={state.iconUrl || DEFAULT_ICON}
+                      src={preview}
                       alt={s.label}
                       className="h-14 w-14 rounded-2xl object-cover bg-white"
                       loading="lazy"
