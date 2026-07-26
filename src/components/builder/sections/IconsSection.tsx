@@ -8,16 +8,10 @@ interface Props {
   update: <K extends keyof BuilderState>(key: K, value: BuilderState[K]) => void
 }
 
-const ICONS_BASE = "https://xn----utbhbbdxh.xn--p1ai/icons-set"
+const DEFAULT_ICON =
+  "https://cdn.poehali.dev/projects/b471473c-c1c9-4346-909f-afc6a80feb03/bucket/b567d9e6-9f7a-4562-a959-8d5ddb15d139.png"
 
-export const iconStyles = [
-  { id: "default", label: "Основная" },
-  { id: "gradient", label: "Градиент" },
-  { id: "dark", label: "Тёмная" },
-  { id: "ocean", label: "Океан" },
-  { id: "gold", label: "Золото" },
-  { id: "minimal", label: "Минимал" },
-]
+export const iconStyles = [{ id: "default", label: "Основная" }]
 
 export default function IconsSection({ state, update }: Props) {
   return (
@@ -26,8 +20,8 @@ export default function IconsSection({ state, update }: Props) {
         <CardContent className="pt-6">
           <p className="text-white text-sm font-medium mb-1">Иконка приложения</p>
           <p className="text-gray-500 text-xs mb-4">
-            Как приложение выглядит на экране телефона. Иконку можно сменить прямо в готовом
-            приложении — она обновится на рабочем столе.
+            Как приложение выглядит на экране телефона. Этот значок попадёт в сборку. Чтобы
+            загрузить свой — используйте раздел «Информация о приложении».
           </p>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
             {iconStyles.map((s) => {
@@ -44,9 +38,9 @@ export default function IconsSection({ state, update }: Props) {
                 >
                   <div className="relative">
                     <img
-                      src={`${ICONS_BASE}/${s.id}-192.png`}
+                      src={state.iconUrl || DEFAULT_ICON}
                       alt={s.label}
-                      className="h-14 w-14 rounded-2xl object-cover"
+                      className="h-14 w-14 rounded-2xl object-cover bg-white"
                       loading="lazy"
                     />
                     {isActive && (

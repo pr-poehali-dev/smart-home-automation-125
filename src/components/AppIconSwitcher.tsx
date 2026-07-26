@@ -1,19 +1,12 @@
 import { useEffect, useState } from "react"
 import Icon from "@/components/ui/icon"
 
-const ICONS_BASE = "https://xn----utbhbbdxh.xn--p1ai/icons-set"
-
 const ICON_STYLES = [
   {
     id: "default",
     label: "Основная",
     img: "https://cdn.poehali.dev/projects/b471473c-c1c9-4346-909f-afc6a80feb03/bucket/b567d9e6-9f7a-4562-a959-8d5ddb15d139.png",
   },
-  { id: "gradient", label: "Градиент" },
-  { id: "dark", label: "Тёмная" },
-  { id: "ocean", label: "Океан" },
-  { id: "gold", label: "Золото" },
-  { id: "minimal", label: "Минимал" },
 ]
 
 const STORAGE_KEY = "app_icon_style"
@@ -73,9 +66,9 @@ export default function AppIconSwitcher() {
             >
               <div className="relative">
                 <img
-                  src={s.img ?? `${ICONS_BASE}/${s.id}-192.png`}
+                  src={s.img}
                   alt={s.label}
-                  className="h-16 w-16 rounded-2xl object-cover"
+                  className="h-16 w-16 rounded-2xl object-cover bg-white"
                   loading="lazy"
                 />
                 {isActive && (
