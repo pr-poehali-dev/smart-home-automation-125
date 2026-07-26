@@ -351,6 +351,21 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     if perm_microphone:
         manifest.append('    <uses-feature android:name="android.hardware.microphone" android:required="false" />')
 
+    manifest.append("    <queries>")
+    manifest.append("        <intent>")
+    manifest.append('            <action android:name="android.intent.action.VIEW" />')
+    manifest.append('            <data android:scheme="https" />')
+    manifest.append("        </intent>")
+    manifest.append("        <intent>")
+    manifest.append('            <action android:name="android.intent.action.VIEW" />')
+    manifest.append('            <data android:scheme="tel" />')
+    manifest.append("        </intent>")
+    manifest.append("        <intent>")
+    manifest.append('            <action android:name="android.intent.action.SENDTO" />')
+    manifest.append('            <data android:scheme="mailto" />')
+    manifest.append("        </intent>")
+    manifest.append("    </queries>")
+
     app_attrs = [
         'android:allowBackup="true"',
         'android:hardwareAccelerated="true"',
@@ -561,6 +576,23 @@ public class MainActivity extends Activity {{
 
         webView.setWebViewClient(new WebViewClient() {{
             @Override
+            public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {{
+                Uri uri = request.getUrl();
+                String scheme = uri.getScheme();
+                if (scheme != null && (scheme.equals("http") || scheme.equals("https"))) {{
+                    return false;
+                }}
+                try {{
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                }} catch (Exception e) {{
+                    // нет приложения для этой ссылки — молча игнорируем
+                }}
+                return true;
+            }}
+
+            @Override
             public void onPageFinished(WebView view, String url) {{
                 super.onPageFinished(view, url);
                 view.evaluateJavascript(
@@ -589,12 +621,6 @@ public class MainActivity extends Activity {{
         webView.setWebChromeClient(new WebChromeClient() {{
             @Override
             public boolean onConsoleMessage(android.webkit.ConsoleMessage cm) {{
-                if (cm.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {{
-                    final String msg = cm.message();
-                    runOnUiThread(() -> android.widget.Toast.makeText(MainActivity.this,
-                        "Ошибка страницы: " + (msg != null && msg.length() > 180 ? msg.substring(0, 180) : msg),
-                        android.widget.Toast.LENGTH_LONG).show());
-                }}
                 return true;
             }}
 
