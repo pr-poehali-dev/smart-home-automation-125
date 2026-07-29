@@ -62,6 +62,63 @@ export default function NotificationsSection({ state, update }: Props) {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label className="text-white flex items-center gap-1">
+                    Файл google-services.json (Firebase)
+                    <Icon name="Info" size={13} className="text-gray-500" />
+                  </Label>
+                  <label
+                    className={`flex items-center gap-3 rounded-lg border border-dashed p-3 cursor-pointer transition-colors ${
+                      state.googleServicesJson
+                        ? "border-green-500/40 bg-green-500/5"
+                        : "border-red-500/30 bg-neutral-900 hover:bg-neutral-900/70"
+                    }`}
+                  >
+                    <Icon
+                      name={state.googleServicesJson ? "CircleCheck" : "Upload"}
+                      size={20}
+                      className={state.googleServicesJson ? "text-green-400" : "text-red-400"}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white truncate">
+                        {state.googleServicesJson ? "Файл загружен" : "Выбрать google-services.json"}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {state.googleServicesJson
+                          ? "Нажмите, чтобы заменить файл"
+                          : "Скачивается из настроек Firebase-проекта"}
+                      </p>
+                    </div>
+                    {state.googleServicesJson && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          update("googleServicesJson", "")
+                        }}
+                        className="text-gray-500 hover:text-red-400"
+                      >
+                        <Icon name="X" size={16} />
+                      </button>
+                    )}
+                    <input
+                      type="file"
+                      accept="application/json,.json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        const reader = new FileReader()
+                        reader.onload = () => {
+                          update("googleServicesJson", String(reader.result || ""))
+                        }
+                        reader.readAsText(file)
+                        e.target.value = ""
+                      }}
+                    />
+                  </label>
+                </div>
+
                 <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-3 space-y-1.5">
                   <p className="text-xs font-medium text-white">Как получить эти данные:</p>
                   <ol className="text-xs text-gray-400 space-y-1 list-decimal list-inside">

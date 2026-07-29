@@ -47,6 +47,7 @@ export interface BuilderState {
   pushProvider: "firebase" | "onesignal"
   oneSignalAppId: string
   oneSignalRestApiKey: string
+  googleServicesJson: string
   notificationIconSet: string
   notificationIconName: string
 
@@ -124,6 +125,7 @@ export const defaultBuilderState: BuilderState = {
   pushProvider: "onesignal",
   oneSignalAppId: "",
   oneSignalRestApiKey: "",
+  googleServicesJson: "",
   notificationIconSet: "lucide",
   notificationIconName: "Bell",
 

@@ -153,6 +153,7 @@ export default function AppBuilder() {
           push_provider: "onesignal",
           onesignal_app_id: state.oneSignalAppId || undefined,
           onesignal_rest_api_key: state.oneSignalRestApiKey || undefined,
+          google_services_json: state.googleServicesJson || undefined,
           notification_icon_set: state.notificationIconSet,
           notification_icon_name: state.notificationIconName,
           icon_style: state.iconStyle,
