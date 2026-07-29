@@ -293,6 +293,12 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     push_enabled = req.push_enabled or cfg_bool("pushEnabled")
     push_provider = (req.push_provider or cfg.get("pushProvider") or "onesignal").lower()
     onesignal_app_id = req.onesignal_app_id or cfg.get("oneSignalAppId")
+    onesignal_active = bool(push_enabled and push_provider == "onesignal" and onesignal_app_id)
+    onesignal_import_java = "import com.onesignal.OneSignal;\nimport com.onesignal.Continue;\n" if onesignal_active else ""
+    onesignal_prompt_java = (
+        "\n        OneSignal.getNotifications().requestPermission(true, Continue.none());\n"
+        if onesignal_active else ""
+    )
     user_agent = cfg.get("userAgent") or ""
     custom_js = cfg.get("customJs") or ""
     custom_css = cfg.get("customCss") or ""
@@ -623,7 +629,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import java.io.File;
 import java.io.IOException;
-
+{onesignal_import_java}
 public class MainActivity extends Activity {{
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
@@ -865,7 +871,7 @@ public class MainActivity extends Activity {{
             if (ContextCompat.checkSelfPermission(this, "android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {{
                 ActivityCompat.requestPermissions(this, new String[]{{"android.permission.POST_NOTIFICATIONS"}}, WEB_NOTIFICATION_PERMISSION_RESULT);
             }}
-        }}
+        }}{onesignal_prompt_java}
     }}
 
     private boolean isNetworkAvailable() {{
@@ -1056,7 +1062,6 @@ public class LockActivity extends AppCompatActivity {{
 
 import android.app.Application;
 import com.onesignal.OneSignal;
-import com.onesignal.Continue;
 import com.onesignal.debug.LogLevel;
 
 public class App extends Application {{
@@ -1065,7 +1070,6 @@ public class App extends Application {{
         super.onCreate();
         OneSignal.getDebug().setLogLevel(LogLevel.WARN);
         OneSignal.initWithContext(this, {java_str(onesignal_app_id)});
-        OneSignal.getNotifications().requestPermission(true, Continue.none());
     }}
 }}
 """
