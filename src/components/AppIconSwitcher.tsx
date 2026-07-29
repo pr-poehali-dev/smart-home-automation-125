@@ -6,10 +6,18 @@ const ICON_STYLES = appIconStyles.map((s) => ({ id: s.id, label: s.label, img: s
 
 const STORAGE_KEY = "app_icon_style"
 
+type IconBridge = { setIcon: (style: string) => void; isAvailable?: () => boolean }
+
 declare global {
   interface Window {
-    AndroidIconNative?: { setIcon: (style: string) => void; isAvailable?: () => boolean }
+    AndroidIcon?: IconBridge
+    AndroidIconNative?: IconBridge
   }
+}
+
+function getIconBridge(): IconBridge | undefined {
+  if (typeof window === "undefined") return undefined
+  return window.AndroidIcon || window.AndroidIconNative
 }
 
 export default function AppIconSwitcher() {
@@ -18,7 +26,7 @@ export default function AppIconSwitcher() {
   const [status, setStatus] = useState("")
 
   useEffect(() => {
-    setNativeAvailable(typeof window !== "undefined" && !!window.AndroidIconNative)
+    setNativeAvailable(!!getIconBridge())
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) setSelected(saved)
   }, [])
@@ -26,7 +34,7 @@ export default function AppIconSwitcher() {
   const handleSelect = (styleId: string) => {
     setSelected(styleId)
     localStorage.setItem(STORAGE_KEY, styleId)
-    const bridge = typeof window !== "undefined" ? window.AndroidIconNative : undefined
+    const bridge = getIconBridge()
     if (bridge && typeof bridge.setIcon === "function") {
       try {
         bridge.setIcon(styleId)
