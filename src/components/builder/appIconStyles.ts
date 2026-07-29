@@ -7,8 +7,8 @@ export interface AppIconStyle {
 }
 
 const HEART = "/app-icon-default.png"
-const DARK = "/app-icons/dark.png"
-const GRADIENT = "/app-icons/gradient.png"
+const DARK = "/app-icon-dark.png"
+const GRADIENT = "/app-icon-gradient.png"
 
 export const appIconStyles: AppIconStyle[] = [
   { id: "default", label: "Основная", url: HEART },
