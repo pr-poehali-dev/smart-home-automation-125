@@ -208,67 +208,6 @@ def download_icon(icon_url: str, res_dir: str, bg_color: str = "#1a1025") -> boo
         return False
 
 
-def download_style_icon(icon_url: str, res_dir: str, style_id: str, bg_color: str = "#1a1025") -> bool:
-    """Раскладывает иконку стиля под именем ic_launcher_<style_id> (+ adaptive-слои и alias-xml)."""
-    safe_id = re.sub(r"[^a-z0-9_]", "", (style_id or "").lower())
-    if not safe_id:
-        return False
-    name = f"ic_launcher_{safe_id}"
-    try:
-        req = urllib.request.Request(icon_url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            data = resp.read()
-        if not data:
-            return False
-
-        try:
-            from PIL import Image
-            import io
-
-            img = Image.open(io.BytesIO(data)).convert("RGBA")
-            for folder, size in MIPMAP_SIZES.items():
-                out_dir = os.path.join(res_dir, folder)
-                os.makedirs(out_dir, exist_ok=True)
-                img.resize((size, size), Image.LANCZOS).save(os.path.join(out_dir, f"{name}.png"))
-                fg = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-                inner = int(size * 0.66)
-                icon_inner = img.resize((inner, inner), Image.LANCZOS)
-                off = (size - inner) // 2
-                fg.paste(icon_inner, (off, off), icon_inner)
-                fg.save(os.path.join(out_dir, f"{name}_foreground.png"))
-        except ImportError:
-            for folder in MIPMAP_SIZES:
-                out_dir = os.path.join(res_dir, folder)
-                os.makedirs(out_dir, exist_ok=True)
-                with open(os.path.join(out_dir, f"{name}.png"), "wb") as f:
-                    f.write(data)
-
-        # adaptive-icon xml для этого стиля (Android 8+)
-        anydpi = os.path.join(res_dir, "mipmap-anydpi-v26")
-        os.makedirs(anydpi, exist_ok=True)
-        bg_res = f"ic_launcher_background_{safe_id}"
-        adaptive_xml = (
-            '<?xml version="1.0" encoding="utf-8"?>\n'
-            '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
-            f'    <background android:drawable="@color/{bg_res}" />\n'
-            f'    <foreground android:drawable="@mipmap/{name}_foreground" />\n'
-            "</adaptive-icon>\n"
-        )
-        with open(os.path.join(anydpi, f"{name}.xml"), "w") as f:
-            f.write(adaptive_xml)
-        values_dir = os.path.join(res_dir, "values")
-        os.makedirs(values_dir, exist_ok=True)
-        with open(os.path.join(values_dir, f"{bg_res}.xml"), "w") as f:
-            f.write(
-                '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
-                f'    <color name="{bg_res}">{bg_color}</color>\n'
-                "</resources>\n"
-            )
-        return True
-    except Exception:
-        return False
-
-
 def generate_project(work_dir: str, package_name: str, app_name: str, site_url: str, req: BuildRequest):
     cfg = req.config or {}
 
@@ -293,12 +232,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     push_enabled = req.push_enabled or cfg_bool("pushEnabled")
     push_provider = (req.push_provider or cfg.get("pushProvider") or "onesignal").lower()
     onesignal_app_id = req.onesignal_app_id or cfg.get("oneSignalAppId")
-    onesignal_active = bool(push_enabled and push_provider == "onesignal" and onesignal_app_id)
-    onesignal_import_java = "import com.onesignal.OneSignal;\nimport com.onesignal.Continue;\n" if onesignal_active else ""
-    onesignal_prompt_java = (
-        "\n        OneSignal.getNotifications().requestPermission(true, Continue.none());\n"
-        if onesignal_active else ""
-    )
     user_agent = cfg.get("userAgent") or ""
     custom_js = cfg.get("customJs") or ""
     custom_css = cfg.get("customCss") or ""
@@ -312,24 +245,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     status_bar_color = color_or(cfg.get("statusBarColor"), theme_color)
     nav_bar_color = color_or(cfg.get("navBarColor"), "#FFFFFF")
 
-    # Стили иконок для переключения на рабочем столе (activity-alias).
-    # config.iconStyles = [{"id": "default", "url": "https://..."}, ...]
-    raw_styles = cfg.get("iconStyles") or []
-    icon_styles = []
-    seen_ids = set()
-    for s in raw_styles:
-        if not isinstance(s, dict):
-            continue
-        sid = re.sub(r"[^a-z0-9_]", "", str(s.get("id") or "").lower())
-        surl = str(s.get("url") or "").strip()
-        if sid and surl and sid not in seen_ids:
-            seen_ids.add(sid)
-            icon_styles.append({"id": sid, "url": surl})
-    active_style = re.sub(r"[^a-z0-9_]", "", str(cfg.get("iconStyle") or "").lower())
-    if icon_styles and active_style not in seen_ids:
-        active_style = icon_styles[0]["id"]
-    styles_icon_bg = color_or(cfg.get("iconBackground"), color_or(splash_color, "#1a1025"))
-
     package_path = package_name.replace(".", "/")
     java_dir = os.path.join(work_dir, "app", "src", "main", "java", package_path)
     res_dir = os.path.join(work_dir, "app", "src", "main", "res")
@@ -340,30 +255,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     os.makedirs(os.path.join(res_dir, "values"), exist_ok=True)
     os.makedirs(os.path.join(res_dir, "drawable"), exist_ok=True)
     os.makedirs(os.path.join(res_dir, "xml"), exist_ok=True)
-    os.makedirs(os.path.join(res_dir, "raw"), exist_ok=True)
-
-    # keep.xml — запрещает любой оптимизации ресурсов выкидывать иконки лаунчера
-    # и alias-иконки (в release-сборке они иначе считаются «неиспользуемыми»).
-    with open(os.path.join(res_dir, "raw", "keep.xml"), "w") as f:
-        f.write(
-            '<?xml version="1.0" encoding="utf-8"?>\n'
-            '<resources xmlns:tools="http://schemas.android.com/tools"\n'
-            '    tools:keep="@mipmap/ic_launcher*,@mipmap/*,@drawable/*"\n'
-            '    tools:shrinkMode="safe" />\n'
-        )
-
-    # Скачиваем иконки-стили ДО генерации манифеста, чтобы alias'ы ссылались
-    # только на реально существующие ресурсы (иначе aapt упадёт).
-    if len(icon_styles) > 1:
-        ok_styles = []
-        for st in icon_styles:
-            if download_style_icon(st["url"], res_dir, st["id"], styles_icon_bg):
-                ok_styles.append(st)
-            else:
-                logger.warning(f"[build {req.build_id}] пропущен стиль иконки {st['id']} — не скачался")
-        icon_styles = ok_styles
-        if active_style not in {s["id"] for s in icon_styles} and icon_styles:
-            active_style = icon_styles[0]["id"]
 
     with open(os.path.join(work_dir, "settings.gradle"), "w") as f:
         f.write("include ':app'\nrootProject.name = 'GeneratedApp'\n")
@@ -389,7 +280,7 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     if app_lock:
         dependencies.append("implementation 'androidx.biometric:biometric:1.1.0'")
     if push_enabled and push_provider == "onesignal" and onesignal_app_id:
-        dependencies.append("implementation 'com.onesignal:OneSignal:[5.1.6, 5.99.99]'")
+        dependencies.append("implementation 'com.onesignal:OneSignal:[4.0.0, 4.99.99]'")
 
     keystore_path = os.path.join(work_dir, "release.keystore")
     with open(os.path.join(work_dir, "app", "build.gradle"), "w") as f:
@@ -411,8 +302,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
             f'            storePassword "{KEYSTORE_PASSWORD}"\n'
             f'            keyAlias "{KEYSTORE_ALIAS}"\n'
             f'            keyPassword "{KEYSTORE_PASSWORD}"\n'
-            "            v1SigningEnabled true\n"
-            "            v2SigningEnabled true\n"
             "        }\n"
             "    }\n"
             "    buildTypes {\n"
@@ -422,7 +311,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
             "        }\n"
             "        release {\n"
             "            minifyEnabled false\n"
-            "            shrinkResources false\n"
             "            signingConfig signingConfigs.release\n"
             "        }\n"
             "    }\n"
@@ -463,21 +351,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     if perm_microphone:
         manifest.append('    <uses-feature android:name="android.hardware.microphone" android:required="false" />')
 
-    manifest.append("    <queries>")
-    manifest.append("        <intent>")
-    manifest.append('            <action android:name="android.intent.action.VIEW" />')
-    manifest.append('            <data android:scheme="https" />')
-    manifest.append("        </intent>")
-    manifest.append("        <intent>")
-    manifest.append('            <action android:name="android.intent.action.VIEW" />')
-    manifest.append('            <data android:scheme="tel" />')
-    manifest.append("        </intent>")
-    manifest.append("        <intent>")
-    manifest.append('            <action android:name="android.intent.action.SENDTO" />')
-    manifest.append('            <data android:scheme="mailto" />')
-    manifest.append("        </intent>")
-    manifest.append("    </queries>")
-
     app_attrs = [
         'android:allowBackup="true"',
         'android:hardwareAccelerated="true"',
@@ -495,15 +368,11 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
         manifest.append(f"        {a}")
     manifest.append("        >")
 
-    use_alias = len(icon_styles) > 1
-    # Когда стилей несколько — LAUNCHER-точка выносится в activity-alias,
-    # чтобы иконку можно было переключать на лету. Иначе launcher-фильтр остаётся на activity.
     manifest.append(f'        <activity android:name=".{launcher_activity}" android:exported="true" android:screenOrientation="{orientation}">')
-    if not use_alias:
-        manifest.append("            <intent-filter>")
-        manifest.append('                <action android:name="android.intent.action.MAIN" />')
-        manifest.append('                <category android:name="android.intent.category.LAUNCHER" />')
-        manifest.append("            </intent-filter>")
+    manifest.append("            <intent-filter>")
+    manifest.append('                <action android:name="android.intent.action.MAIN" />')
+    manifest.append('                <category android:name="android.intent.category.LAUNCHER" />')
+    manifest.append("            </intent-filter>")
     if deep_links and url_scheme:
         manifest.append("            <intent-filter>")
         manifest.append('                <action android:name="android.intent.action.VIEW" />')
@@ -512,23 +381,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
         manifest.append(f'                <data android:scheme="{xml_escape(url_scheme)}" />')
         manifest.append("            </intent-filter>")
     manifest.append("        </activity>")
-
-    if use_alias:
-        for st in icon_styles:
-            sid = st["id"]
-            enabled = "true" if sid == active_style else "false"
-            alias_name = f".Icon_{sid}"
-            manifest.append(
-                f'        <activity-alias android:name="{alias_name}"'
-                f' android:enabled="{enabled}" android:exported="true"'
-                f' android:icon="@mipmap/ic_launcher_{sid}"'
-                f' android:targetActivity=".{launcher_activity}">'
-            )
-            manifest.append("            <intent-filter>")
-            manifest.append('                <action android:name="android.intent.action.MAIN" />')
-            manifest.append('                <category android:name="android.intent.category.LAUNCHER" />')
-            manifest.append("            </intent-filter>")
-            manifest.append("        </activity-alias>")
 
     if app_lock:
         manifest.append('        <activity android:name=".MainActivity" android:exported="false" />')
@@ -613,9 +465,6 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     cache_mode = "WebSettings.LOAD_DEFAULT"
     mixed_content = "WebSettings.MIXED_CONTENT_ALWAYS_ALLOW" if allow_http else "WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE"
 
-    # Java-массив id стилей иконок для моста AndroidIcon (переключение alias'ов на рабочем столе).
-    icon_alias_ids = ", ".join(json.dumps(s["id"]) for s in icon_styles) if len(icon_styles) > 1 else ""
-
     main_activity = f"""package {package_name};
 
 import android.Manifest;
@@ -643,7 +492,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import java.io.File;
 import java.io.IOException;
-{onesignal_import_java}
+
 public class MainActivity extends Activity {{
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
@@ -712,29 +561,6 @@ public class MainActivity extends Activity {{
 
         webView.setWebViewClient(new WebViewClient() {{
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {{
-                Uri uri = request.getUrl();
-                String scheme = uri.getScheme();
-                if (scheme != null && (scheme.equals("http") || scheme.equals("https"))) {{
-                    return false;
-                }}
-                try {{
-                    Intent intent;
-                    if ("intent".equals(scheme)) {{
-                        intent = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME);
-                    }} else {{
-                        intent = new Intent(Intent.ACTION_VIEW, uri);
-                    }}
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                }} catch (Exception e) {{
-                    runOnUiThread(() -> android.widget.Toast.makeText(MainActivity.this,
-                        "Для оплаты установите приложение банка", android.widget.Toast.LENGTH_LONG).show());
-                }}
-                return true;
-            }}
-
-            @Override
             public void onPageFinished(WebView view, String url) {{
                 super.onPageFinished(view, url);
                 view.evaluateJavascript(
@@ -763,6 +589,12 @@ public class MainActivity extends Activity {{
         webView.setWebChromeClient(new WebChromeClient() {{
             @Override
             public boolean onConsoleMessage(android.webkit.ConsoleMessage cm) {{
+                if (cm.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {{
+                    final String msg = cm.message();
+                    runOnUiThread(() -> android.widget.Toast.makeText(MainActivity.this,
+                        "Ошибка страницы: " + (msg != null && msg.length() > 180 ? msg.substring(0, 180) : msg),
+                        android.widget.Toast.LENGTH_LONG).show());
+                }}
                 return true;
             }}
 
@@ -824,18 +656,7 @@ public class MainActivity extends Activity {{
                 popup.setWebViewClient(new WebViewClient() {{
                     @Override
                     public boolean shouldOverrideUrlLoading(WebView v, android.webkit.WebResourceRequest req) {{
-                        Uri u = req.getUrl();
-                        String s = u.getScheme();
-                        if (s != null && (s.equals("http") || s.equals("https"))) {{
-                            webView.loadUrl(u.toString());
-                        }} else {{
-                            try {{
-                                Intent i = new Intent(Intent.ACTION_VIEW, u);
-                                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(i);
-                            }} catch (Exception e) {{
-                            }}
-                        }}
+                        webView.loadUrl(req.getUrl().toString());
                         return true;
                     }}
                 }});
@@ -878,14 +699,13 @@ public class MainActivity extends Activity {{
         }} else {{
             webView.loadUrl({safe_url});
         }}
-        webView.addJavascriptInterface(new IconBridge(), "AndroidIconNative");
         setContentView(webView);
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {{
             if (ContextCompat.checkSelfPermission(this, "android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {{
                 ActivityCompat.requestPermissions(this, new String[]{{"android.permission.POST_NOTIFICATIONS"}}, WEB_NOTIFICATION_PERMISSION_RESULT);
             }}
-        }}{onesignal_prompt_java}
+        }}
     }}
 
     private boolean isNetworkAvailable() {{
@@ -980,44 +800,6 @@ public class MainActivity extends Activity {{
         }}
     }}
 
-    public class IconBridge {{
-        private final String[] styleIds = new String[]{{ {icon_alias_ids} }};
-
-        @android.webkit.JavascriptInterface
-        public void setIcon(final String styleId) {{
-            if (styleId == null || styleIds.length == 0) return;
-            boolean known = false;
-            for (String s : styleIds) {{ if (s.equals(styleId)) {{ known = true; break; }} }}
-            if (!known) return;
-            runOnUiThread(new Runnable() {{
-                @Override
-                public void run() {{
-                    try {{
-                        PackageManager pm = getPackageManager();
-                        String pkg = getPackageName();
-                        for (String s : styleIds) {{
-                            android.content.ComponentName comp =
-                                new android.content.ComponentName(pkg, pkg + ".Icon_" + s);
-                            int state = s.equals(styleId)
-                                ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-                                : PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
-                            pm.setComponentEnabledSetting(comp, state, PackageManager.DONT_KILL_APP);
-                        }}
-                        getSharedPreferences("app_icon", MODE_PRIVATE)
-                            .edit().putString("style", styleId).apply();
-                    }} catch (Exception e) {{
-                        // игнорируем — иконку сменить не удалось
-                    }}
-                }}
-            }});
-        }}
-
-        @android.webkit.JavascriptInterface
-        public boolean isAvailable() {{
-            return styleIds.length > 0;
-        }}
-    }}
-
 }}
 """
 
@@ -1076,14 +858,14 @@ public class LockActivity extends AppCompatActivity {{
 
 import android.app.Application;
 import com.onesignal.OneSignal;
-import com.onesignal.debug.LogLevel;
 
 public class App extends Application {{
     @Override
     public void onCreate() {{
         super.onCreate();
-        OneSignal.getDebug().setLogLevel(LogLevel.WARN);
-        OneSignal.initWithContext(this, {java_str(onesignal_app_id)});
+        OneSignal.setLogLevel(OneSignal.LOG_LEVEL.NONE, OneSignal.LOG_LEVEL.NONE);
+        OneSignal.initWithContext(this);
+        OneSignal.setAppId({java_str(onesignal_app_id)});
     }}
 }}
 """
@@ -1139,10 +921,10 @@ def run_build(req: BuildRequest, base_url: str):
         logger.info(f"[build {req.build_id}] генерирую Android-проект (package={pkg})")
         generate_project(work_dir, pkg, req.app_name, req.site_url, req)
         ensure_keystore(pkg, os.path.join(work_dir, "release.keystore"), req.build_id)
-        logger.info(f"[build {req.build_id}] проект сгенерирован и подписан ключом, запускаю gradle assembleRelease")
+        logger.info(f"[build {req.build_id}] проект сгенерирован и подписан ключом, запускаю gradle assembleDebug")
 
         proc = subprocess.Popen(
-            ["gradle", "assembleRelease", "--no-daemon"],
+            ["gradle", "assembleDebug", "--no-daemon"],
             cwd=work_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -1171,7 +953,7 @@ def run_build(req: BuildRequest, base_url: str):
             send_callback(req.callback_url, req.build_id, "failed", error=error_log)
             return
 
-        built_apk = os.path.join(work_dir, "app", "build", "outputs", "apk", "release", "app-release.apk")
+        built_apk = os.path.join(work_dir, "app", "build", "outputs", "apk", "debug", "app-debug.apk")
         if not os.path.exists(built_apk):
             logger.error(f"[build {req.build_id}] gradle вернул код 0, но APK-файл не найден по пути {built_apk}")
             send_callback(req.callback_url, req.build_id, "failed", error=f"APK-файл не найден после сборки: {built_apk}")
