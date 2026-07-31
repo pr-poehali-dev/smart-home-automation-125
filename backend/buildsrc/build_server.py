@@ -340,6 +340,17 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     os.makedirs(os.path.join(res_dir, "values"), exist_ok=True)
     os.makedirs(os.path.join(res_dir, "drawable"), exist_ok=True)
     os.makedirs(os.path.join(res_dir, "xml"), exist_ok=True)
+    os.makedirs(os.path.join(res_dir, "raw"), exist_ok=True)
+
+    # keep.xml — запрещает любой оптимизации ресурсов выкидывать иконки лаунчера
+    # и alias-иконки (в release-сборке они иначе считаются «неиспользуемыми»).
+    with open(os.path.join(res_dir, "raw", "keep.xml"), "w") as f:
+        f.write(
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            '<resources xmlns:tools="http://schemas.android.com/tools"\n'
+            '    tools:keep="@mipmap/ic_launcher*,@mipmap/*,@drawable/*"\n'
+            '    tools:shrinkMode="safe" />\n'
+        )
 
     # Скачиваем иконки-стили ДО генерации манифеста, чтобы alias'ы ссылались
     # только на реально существующие ресурсы (иначе aapt упадёт).
@@ -409,6 +420,7 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
             "        }\n"
             "        release {\n"
             "            minifyEnabled false\n"
+            "            shrinkResources false\n"
             "            signingConfig signingConfigs.release\n"
             "        }\n"
             "    }\n"
