@@ -1125,10 +1125,10 @@ def run_build(req: BuildRequest, base_url: str):
         logger.info(f"[build {req.build_id}] генерирую Android-проект (package={pkg})")
         generate_project(work_dir, pkg, req.app_name, req.site_url, req)
         ensure_keystore(pkg, os.path.join(work_dir, "release.keystore"), req.build_id)
-        logger.info(f"[build {req.build_id}] проект сгенерирован и подписан ключом, запускаю gradle assembleDebug")
+        logger.info(f"[build {req.build_id}] проект сгенерирован и подписан ключом, запускаю gradle assembleRelease")
 
         proc = subprocess.Popen(
-            ["gradle", "assembleDebug", "--no-daemon"],
+            ["gradle", "assembleRelease", "--no-daemon"],
             cwd=work_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -1157,7 +1157,7 @@ def run_build(req: BuildRequest, base_url: str):
             send_callback(req.callback_url, req.build_id, "failed", error=error_log)
             return
 
-        built_apk = os.path.join(work_dir, "app", "build", "outputs", "apk", "debug", "app-debug.apk")
+        built_apk = os.path.join(work_dir, "app", "build", "outputs", "apk", "release", "app-release.apk")
         if not os.path.exists(built_apk):
             logger.error(f"[build {req.build_id}] gradle вернул код 0, но APK-файл не найден по пути {built_apk}")
             send_callback(req.callback_url, req.build_id, "failed", error=f"APK-файл не найден после сборки: {built_apk}")
