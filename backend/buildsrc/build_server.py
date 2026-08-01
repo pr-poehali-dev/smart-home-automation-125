@@ -646,6 +646,7 @@ import java.io.IOException;
 {onesignal_import_java}
 public class MainActivity extends Activity {{
     private WebView webView;
+    private IconBridge iconBridge;
     private ValueCallback<Uri[]> filePathCallback;
     private String cameraPhotoPath;
     private PermissionRequest pendingPermissionRequest;
@@ -710,13 +711,42 @@ public class MainActivity extends Activity {{
         final String customCss = {java_str(custom_css)};
         final boolean offlineEnabled = {str(offline_enabled).lower()};
 
+        final String medianShimJs =
+            "(function(){{" +
+            "if(window.median&&window.median.appIcon)return;" +
+            "var shim={{appIcon:{{select:function(opts){{try{{" +
+            "var icon=opts&&opts.icon;" +
+            "if(window.AndroidIconNative&&icon)window.AndroidIconNative.setIcon(icon);" +
+            "}}catch(e){{}}return true;}}}}}};" +
+            "window.median=Object.assign({{}},window.median,shim);" +
+            "window.gonative=Object.assign({{}},window.gonative,shim);" +
+            "}})();";
+
         webView.setWebViewClient(new WebViewClient() {{
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {{
+                super.onPageStarted(view, url, favicon);
+                view.evaluateJavascript(medianShimJs, null);
+            }}
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {{
                 Uri uri = request.getUrl();
                 String scheme = uri.getScheme();
                 if (scheme != null && (scheme.equals("http") || scheme.equals("https"))) {{
                     return false;
+                }}
+                if (scheme != null && (scheme.equals("median") || scheme.equals("gonative"))
+                        && "appIcon".equals(uri.getHost()) && "/select".equals(uri.getPath())) {{
+                    final String icon = uri.getQueryParameter("icon");
+                    if (icon != null) {{
+                        runOnUiThread(new Runnable() {{
+                            @Override public void run() {{
+                                iconBridge.setIcon(icon);
+                            }}
+                        }});
+                    }}
+                    return true;
                 }}
                 try {{
                     Intent intent;
@@ -737,6 +767,7 @@ public class MainActivity extends Activity {{
             @Override
             public void onPageFinished(WebView view, String url) {{
                 super.onPageFinished(view, url);
+                view.evaluateJavascript(medianShimJs, null);
                 view.evaluateJavascript(
                     "(function(){{if(window.__errHook)return;window.__errHook=1;" +
                     "window.addEventListener('error',function(e){{console.error('JS: '+(e.message||e.type)+' @'+(e.filename||'')+':'+(e.lineno||''));}});" +
@@ -878,7 +909,8 @@ public class MainActivity extends Activity {{
         }} else {{
             webView.loadUrl({safe_url});
         }}
-        webView.addJavascriptInterface(new IconBridge(), "AndroidIconNative");
+        iconBridge = new IconBridge();
+        webView.addJavascriptInterface(iconBridge, "AndroidIconNative");
         setContentView(webView);
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {{
