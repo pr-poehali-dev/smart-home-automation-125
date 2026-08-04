@@ -299,6 +299,73 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
         "\n        OneSignal.getNotifications().requestPermission(true, Continue.none());\n"
         if onesignal_active else ""
     )
+    onesignal_bridge_js_interface = (
+        '        webView.addJavascriptInterface(new AndroidOneSignalBridge(), "AndroidOneSignal");\n'
+        if onesignal_active else ""
+    )
+    onesignal_bridge_class = (
+        """
+    public class AndroidOneSignalBridge {
+        @android.webkit.JavascriptInterface
+        public void login(final String externalId) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        OneSignal.login(externalId);
+                    } catch (Exception e) {
+                        // игнорируем — не удалось привязать пользователя
+                    }
+                }
+            });
+        }
+
+        @android.webkit.JavascriptInterface
+        public void logout() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        OneSignal.logout();
+                    } catch (Exception e) {
+                        // игнорируем
+                    }
+                }
+            });
+        }
+
+        @android.webkit.JavascriptInterface
+        public void promptPush() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        OneSignal.getNotifications().requestPermission(true, Continue.none());
+                    } catch (Exception e) {
+                        // игнорируем
+                    }
+                }
+            });
+        }
+
+        @android.webkit.JavascriptInterface
+        public String getInfo() {
+            try {
+                String onesignalId = OneSignal.getUser() != null ? OneSignal.getUser().getOnesignalId() : null;
+                String subscriptionId = OneSignal.getUser() != null && OneSignal.getUser().getPushSubscription() != null
+                    ? OneSignal.getUser().getPushSubscription().getId() : null;
+                org.json.JSONObject result = new org.json.JSONObject();
+                result.put("oneSignalId", onesignalId != null ? onesignalId : "");
+                result.put("oneSignalUserId", subscriptionId != null ? subscriptionId : "");
+                return result.toString();
+            } catch (Exception e) {
+                return "{}";
+            }
+        }
+    }
+"""
+        if onesignal_active else ""
+    )
     user_agent = cfg.get("userAgent") or ""
     custom_js = cfg.get("customJs") or ""
     custom_css = cfg.get("customCss") or ""
@@ -713,11 +780,29 @@ public class MainActivity extends Activity {{
 
         final String medianShimJs =
             "(function(){{" +
-            "if(window.median&&window.median.appIcon)return;" +
+            "if(window.median&&window.median.appIcon&&window.median.onesignal)return;" +
             "var shim={{appIcon:{{select:function(opts){{try{{" +
             "var icon=opts&&opts.icon;" +
             "if(window.AndroidIconNative&&icon)window.AndroidIconNative.setIcon(icon);" +
-            "}}catch(e){{}}return true;}}}}}};" +
+            "}}catch(e){{}}return true;}}}}," +
+            "onesignal:{{" +
+            "login:function(opts){{try{{" +
+            "var extId=opts&&opts.externalId;" +
+            "if(window.AndroidOneSignal&&extId)window.AndroidOneSignal.login(extId);" +
+            "}}catch(e){{}}return true;}}," +
+            "logout:function(){{try{{" +
+            "if(window.AndroidOneSignal)window.AndroidOneSignal.logout();" +
+            "}}catch(e){{}}return true;}}," +
+            "register:function(){{try{{" +
+            "if(window.AndroidOneSignal)window.AndroidOneSignal.promptPush();" +
+            "}}catch(e){{}}return true;}}," +
+            "promptForPushNotifications:function(){{try{{" +
+            "if(window.AndroidOneSignal)window.AndroidOneSignal.promptPush();" +
+            "}}catch(e){{}}return true;}}," +
+            "onesignalInfo:function(){{try{{" +
+            "if(window.AndroidOneSignal)return Promise.resolve(JSON.parse(window.AndroidOneSignal.getInfo()));" +
+            "}}catch(e){{}}return Promise.resolve({{}});}}" +
+            "}}}};" +
             "window.median=Object.assign({{}},window.median,shim);" +
             "window.gonative=Object.assign({{}},window.gonative,shim);" +
             "}})();";
@@ -911,7 +996,7 @@ public class MainActivity extends Activity {{
         }}
         iconBridge = new IconBridge();
         webView.addJavascriptInterface(iconBridge, "AndroidIconNative");
-        setContentView(webView);
+{onesignal_bridge_js_interface}        setContentView(webView);
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {{
             if (ContextCompat.checkSelfPermission(this, "android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {{
@@ -1049,7 +1134,7 @@ public class MainActivity extends Activity {{
             return styleIds.length > 0;
         }}
     }}
-
+{onesignal_bridge_class}
 }}
 """
 
