@@ -294,9 +294,37 @@ def generate_project(work_dir: str, package_name: str, app_name: str, site_url: 
     push_provider = (req.push_provider or cfg.get("pushProvider") or "onesignal").lower()
     onesignal_app_id = req.onesignal_app_id or cfg.get("oneSignalAppId")
     onesignal_active = bool(push_enabled and push_provider == "onesignal" and onesignal_app_id)
-    onesignal_import_java = "import com.onesignal.OneSignal;\nimport com.onesignal.Continue;\n" if onesignal_active else ""
+    onesignal_import_java = (
+        "import com.onesignal.OneSignal;\nimport com.onesignal.Continue;\n"
+        "import com.onesignal.notifications.INotificationClickEvent;\n"
+        "import com.onesignal.notifications.INotificationClickListener;\n"
+        if onesignal_active else ""
+    )
     onesignal_prompt_java = (
         "\n        OneSignal.getNotifications().requestPermission(true, Continue.none());\n"
+        if onesignal_active else ""
+    )
+    # Клик по push-уведомлению по умолчанию открывает Launch URL во внешнем браузере.
+    # Регистрируя свой click-listener, мы перехватываем это и грузим ссылку в WebView приложения —
+    # SDK при наличии слушателя больше не выполняет открытие ссылки самостоятельно.
+    onesignal_click_listener_java = (
+        "\n        OneSignal.getNotifications().addClickListener(new INotificationClickListener() {\n"
+        "            @Override\n"
+        "            public void onClick(INotificationClickEvent event) {\n"
+        "                try {\n"
+        "                    final String clickUrl = event.getNotification().getLaunchURL();\n"
+        "                    if (clickUrl != null && !clickUrl.isEmpty()) {\n"
+        "                        runOnUiThread(new Runnable() {\n"
+        "                            @Override public void run() {\n"
+        "                                webView.loadUrl(clickUrl);\n"
+        "                            }\n"
+        "                        });\n"
+        "                    }\n"
+        "                } catch (Exception e) {\n"
+        "                    // игнорируем — не удалось открыть ссылку из уведомления\n"
+        "                }\n"
+        "            }\n"
+        "        });\n"
         if onesignal_active else ""
     )
     onesignal_bridge_js_interface = (
@@ -1002,7 +1030,7 @@ public class MainActivity extends Activity {{
             if (ContextCompat.checkSelfPermission(this, "android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {{
                 ActivityCompat.requestPermissions(this, new String[]{{"android.permission.POST_NOTIFICATIONS"}}, WEB_NOTIFICATION_PERMISSION_RESULT);
             }}
-        }}{onesignal_prompt_java}
+        }}{onesignal_prompt_java}{onesignal_click_listener_java}
     }}
 
     private boolean isNetworkAvailable() {{
