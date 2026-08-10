@@ -121,9 +121,14 @@ export default function InfoSection({ state, update }: Props) {
             </Label>
             <Input
               value={state.versionCode}
-              onChange={(e) => update("versionCode", e.target.value)}
+              onChange={(e) => update("versionCode", e.target.value.replace(/[^0-9]/g, ""))}
+              inputMode="numeric"
+              placeholder="Целое число, например 3"
               className="bg-neutral-900 border-red-500/20 text-white placeholder:text-gray-500"
             />
+            <p className="text-xs text-gray-500">
+              Только целое число. При каждой новой версии увеличивай его минимум на 1 (например: 2 → 3), иначе магазин отклонит обновление.
+            </p>
           </div>
 
           <div className="space-y-2">
